@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LogLytics — Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-icon active" title="Dashboard">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <div class="nav-icon" title="Explore">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </div>
+      <div class="nav-icon" title="Alerts">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      <div class="nav-icon" title="Analytics">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="nav-icon" title="Reports">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="nav-icon" title="Settings">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg>
+      </div>
+      LogLytics
+    </div>
+    <nav class="topbar-nav">
+      <a class="active">Dashboard</a>
+      <a>Explore</a>
+      <a>Alerts</a>
+      <a>Reports</a>
+      <a>Settings</a>
+    </nav>
+    <div class="topbar-right">
+      <div class="notif-btn">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-dot"></span>
+      </div>
+      <div class="user-chip">
+        <div class="avatar">PS</div>
+        <div class="user-info">
+          <div class="user-name">Priyankori Saha</div>
+          <div class="user-role">Admin</div>
+        </div>
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:12px;height:12px;color:var(--text-dim)"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="content">
+
+      <!-- STAT CARDS -->
+      <div class="stat-cards">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Total Logs (24h)</span>
+            <span class="stat-badge badge-blue">
+              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </span>
+          </div>
+          <div class="stat-value" id="totalCount">0</div>
+          <div class="stat-meta">
+            <span class="stat-change up">
+              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+              +5.8%
+            </span>
+            <span class="stat-sub">vs yesterday</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Error Rate</span>
+            <span class="stat-badge badge-red">
+              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </span>
+          </div>
+          <div class="stat-value" id="errorRateVal">0.00%</div>
+          <div class="stat-meta">
+            <span class="stat-sub"><span class="warn" id="warningCount">0</span> Warnings</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Alerts Triggered</span>
+            <span class="stat-badge badge-yellow">
+              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </span>
+          </div>
+          <div class="stat-value" id="errorCount">0</div>
+          <div class="stat-meta">
+            <span class="stat-sub"><span id="activeCount">0</span> Active &nbsp;<span class="crit" id="critCount">0</span> Critical</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Info Events</span>
+            <span class="stat-badge badge-green">
+              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+          </div>
+          <div class="stat-value" id="infoCount">0</div>
+          <div class="stat-meta">
+            <span class="stat-change up">
+              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+              Normal
+            </span>
+            <span class="stat-sub">activity</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW -->
+      <div class="charts-row">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Log Volume &amp; Errors (Last 24 Hours)</span>
+            <div class="panel-controls">
+              <button class="ctrl-btn">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Last 24 Hours
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <div class="chart-legend">
+              <div class="legend-item"><span class="legend-line" style="background:var(--accent-blue)"></span> Total Logs</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--accent-red)"></span> Errors</div>
+            </div>
+            <div class="chart-canvas-wrap"><canvas id="volumeChart"></canvas></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Log Source Distribution</span>
+          </div>
+          <div class="donut-wrap">
+            <div class="donut-canvas-wrap"><canvas id="donutChart"></canvas></div>
+            <div class="donut-legend">
+              <div class="donut-item"><span class="donut-dot" style="background:#4f8ef7"></span>Application A</div>
+              <div class="donut-item"><span class="donut-dot" style="background:#22c55e"></span>Web Server</div>
+              <div class="donut-item"><span class="donut-dot" style="background:#a78bfa"></span>DB Server</div>
+              <div class="donut-item"><span class="donut-dot" style="background:#f59e0b"></span>Network</div>
+              <div class="donut-item"><span class="donut-dot" style="background:#ef4444"></span>Firewall</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOG STREAM -->
+      <div class="panel log-panel">
+        <div class="log-header">
+          <div class="log-title">
+            <span class="live-dot"></span>Live Log Stream
+          </div>
+          <div class="log-controls">
+            <div class="ctrl-group">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:12px;height:12px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <label>Search:</label>
+              <div class="search-box">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="searchInput" placeholder="SEARCH LOGS…" />
+              </div>
+            </div>
+            <div class="ctrl-group">
+              <label>Log Level:</label>
+              <select id="typeFilter" class="filter-select">
+                <option value="">All</option>
+                <option value="ERROR">ERROR</option>
+                <option value="WARNING">WARNING</option>
+                <option value="INFO">INFO</option>
+              </select>
+            </div>
+            <div class="ctrl-group">
+              <label>Source:</label>
+              <select class="filter-select">
+                <option>All</option>
+              </select>
+            </div>
+            <button class="refresh-btn" id="refreshBtn">
+              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Upload row -->
+        <label class="upload-area">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload .log file to begin parsing
+          <input type="file" id="fileInput" accept=".log,.txt" />
+          <button id="uploadBtn" style="display:none"></button>
+        </label>
+
+        <!-- Alert bar -->
+        <div class="alert-bar" id="alertBox">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="alertText"></span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp <span class="sort-icon">▲</span></th>
+                <th>Level</th>
+                <th>Source</th>
+                <th>Message</th>
+              </tr>
+            </thead>
+            <tbody id="logTableBody">
+              <tr>
+                <td colspan="4" style="text-align:center;padding:32px;color:var(--text-dim);font-size:13px;">
+                  Upload a log file or connect to a log source to view entries
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-footer">
+          <span id="paginationInfo">0 entries</span>
+          <div class="pagination">
+            <div class="page-btn">
+              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            </div>
+            <div class="page-btn">
+              <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

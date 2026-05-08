@@ -1,0 +1,12 @@
+{
+  "name": "log-analyser-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for log analyser",
+  "main": "app.js",
+  "scripts": {
+    "start": "start \"\" http://localhost:3000 & npx serve . -l 3000"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
