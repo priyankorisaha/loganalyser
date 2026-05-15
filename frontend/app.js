@@ -12,11 +12,66 @@ const alertText   = document.getElementById('alertText');
 // ── Upload trigger on file select ────────────────────────────
 fileInput.addEventListener('change', () => { if (fileInput.files[0]) uploadLogFile(); });
 
-// ── Parse a log line ─────────────────────────────────────────
+// ── Classify any text as INFO / WARNING / ERROR ──────────────
+function classifyLog(text) {
+  const u = text.toUpperCase();
+  if (/ERROR|ERR\b|FATAL|CRITICAL|EXCEPTION|FAIL|SEVERE/.test(u)) return 'ERROR';
+  if (/WARN|WARNING|RETRY|DEPRECATED|NOTICE/.test(u))              return 'WARNING';
+  return 'INFO';
+}
+
+// ── Multi-format log line parser (matches all 8 C++ formats) ─
 function parseLine(line) {
-  const match = line.match(/^\[(.*?)\]\s+(INFO|WARNING|ERROR)\s+-\s+(.*)$/);
-  if (!match) return null;
-  return { timestamp: match[1], type: match[2], message: match[3] };
+  if (!line || !line.trim()) return null;
+  let m;
+
+  // 1) JSON line  {"timestamp":"…","level":"…","message":"…"}
+  if (line.trimStart().startsWith('{')) {
+    try {
+      const j = JSON.parse(line);
+      const ts  = j.timestamp || j.time || j.ts || new Date().toISOString();
+      const lvl = j.level || j.severity || j.lvl || '';
+      const msg = j.message || j.msg || line;
+      return { timestamp: ts, type: classifyLog(lvl || msg), message: msg, formatMatched: 'JSON_LINE' };
+    } catch (_) {}
+  }
+
+  // 2) [timestamp] LEVEL - message
+  m = line.match(/^\[(.*?)\]\s+(INFO|WARNING|ERROR|WARN|DEBUG|TRACE|FATAL)\s+-\s+(.+)$/i);
+  if (m) return { timestamp: m[1], type: classifyLog(m[2]), message: m[3], formatMatched: 'BRACKET_LEVEL_DASH' };
+
+  // 3) ISO timestamp LEVEL message  (2024-01-15T10:30:00Z ERROR something)
+  m = line.match(/^(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:?\d{2})?)\s+([A-Za-z]+)\s+(.+)$/);
+  if (m) return { timestamp: m[1], type: classifyLog(m[2]), message: m[3], formatMatched: 'ISO_LEVEL_MSG' };
+
+  // 4) LEVEL: message
+  m = line.match(/^([A-Za-z]+)\s*:\s*(.+)$/);
+  if (m && classifyLog(m[1]) !== 'INFO' || (m && /^(INFO|WARN|WARNING|ERROR|DEBUG|FATAL|TRACE)$/i.test(m[1]))) {
+    if (m) return { timestamp: new Date().toISOString(), type: classifyLog(m[1]), message: m[2], formatMatched: 'LEVEL_COLON_MSG' };
+  }
+
+  // 5) Apache/Nginx  127.0.0.1 - - [date] "GET /path HTTP/1.1" 500 1234
+  m = line.match(/^(\S+)\s+\S+\s+\S+\s+\[([^\]]+)\]\s+"([^"]+)"\s+(\d{3})\s+/);
+  if (m) {
+    const code = parseInt(m[4]);
+    const type = code >= 500 ? 'ERROR' : code >= 400 ? 'WARNING' : 'INFO';
+    return { timestamp: m[2], type, message: `${m[3]} [HTTP ${m[4]}]`, formatMatched: 'APACHE_ACCESS' };
+  }
+
+  // 6) Syslog  May  6 10:30:00 hostname proc[pid]: message
+  m = line.match(/^([A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+\S+\s+\S+:\s+(.+)$/);
+  if (m) return { timestamp: m[1], type: classifyLog(m[2]), message: m[2], formatMatched: 'SYSLOG' };
+
+  // 7) Log4j  2024-01-15 10:30:00,123 ERROR [thread] class - message
+  m = line.match(/^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}[,.]?\d*)\s+(ERROR|WARN|INFO|DEBUG|TRACE|FATAL)\s+.*?[-–]\s+(.+)$/i);
+  if (m) return { timestamp: m[1], type: classifyLog(m[2]), message: m[3], formatMatched: 'LOG4J' };
+
+  // 8) Windows Event  Error   1/15/2024 10:30:00 AM  Application  100  message
+  m = line.match(/^(Error|Warning|Information)\s+(\d+\/\d+\/\d{4}\s+\S+\s+[AP]M)\s+\S+\s+\d+\s+(.+)$/i);
+  if (m) return { timestamp: m[2], type: classifyLog(m[1]), message: m[3], formatMatched: 'WINDOWS_EVENT' };
+
+  // FALLBACK — classify the whole line
+  return { timestamp: new Date().toISOString(), type: classifyLog(line), message: line, formatMatched: 'FALLBACK' };
 }
 
 // ── Upload & parse ───────────────────────────────────────────
@@ -25,8 +80,8 @@ async function uploadLogFile() {
   if (!file) return;
 
   const text = await file.text();
-  const logs = text.split(/\r?\n/).map(parseLine).filter(Boolean);
-  if (!logs.length) { showAlert('No valid log lines found in this file.'); return; }
+  const logs = text.split(/\r?\n/).filter(l => l.trim()).map(parseLine).filter(Boolean);
+  if (!logs.length) { showAlert('File appears to be empty.'); return; }
 
   try {
     const response = await fetch(`${API_BASE}/logs`, {
