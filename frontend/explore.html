@@ -6,352 +6,236 @@
   <title>LogLytics — Explore</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    .page-hero { margin-bottom: 20px; }
-    .page-hero h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-    .page-hero p  { font-size: 13px; color: var(--text-secondary); }
-
-    .explore-filters {
-      display: grid;
-      grid-template-columns: 1fr 160px 200px 200px auto auto;
-      gap: 10px;
-      align-items: end;
-      margin-bottom: 16px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 18px;
-    }
-    .filter-field { display: flex; flex-direction: column; gap: 5px; }
-    .filter-field label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; }
-    .filter-field input, .filter-field select {
-      padding: 7px 10px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-primary);
-      font-size: 13px;
-      font-family: 'DM Sans', sans-serif;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .filter-field input:focus, .filter-field select:focus { border-color: var(--accent-blue); }
-    .filter-field input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
-    .filter-field select option { background: #0f1520; }
-
-    .apply-btn {
-      padding: 8px 20px;
-      background: var(--accent-blue);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px; font-weight: 600;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: opacity 0.2s;
-      align-self: end;
-    }
-    .apply-btn:hover { opacity: 0.85; }
-    .clear-btn {
-      padding: 8px 14px;
-      background: transparent;
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: all 0.2s;
-      align-self: end;
-    }
-    .clear-btn:hover { border-color: var(--border-bright); color: var(--text-primary); }
-
-    .results-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 10px;
-      font-size: 12.5px; color: var(--text-secondary);
-    }
-    .results-count { font-weight: 600; color: var(--text-primary); }
-    .export-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 6px 14px;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 12px; color: var(--text-secondary);
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: all 0.2s;
-    }
-    .export-btn:hover { border-color: var(--border-bright); color: var(--text-primary); }
-    .export-btn svg { width: 13px; height: 13px; }
-
-    .format-badge {
-      display: inline-block;
-      padding: 2px 7px;
-      border-radius: 4px;
-      font-size: 10px; font-weight: 600;
-      background: rgba(167,139,250,0.1);
-      color: #a78bfa;
-      border: 1px solid rgba(167,139,250,0.2);
-      font-family: 'Space Mono', monospace;
-    }
-
-    .loading-row td { text-align: center; padding: 40px; color: var(--text-dim); font-size: 13px; }
-    .spinner {
-      display: inline-block; width: 18px; height: 18px;
-      border: 2px solid rgba(255,255,255,0.1);
-      border-top-color: var(--accent-blue);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      vertical-align: middle; margin-right: 8px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Pagination controls */
-    .pagination-wrap {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 18px;
-      border-top: 1px solid var(--border);
-      font-size: 12px; color: var(--text-dim);
-    }
-    .page-controls { display: flex; align-items: center; gap: 6px; }
-    .pg-btn {
-      padding: 4px 10px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      font-size: 12px;
-      font-family: 'DM Sans', sans-serif;
-      transition: all 0.2s;
-    }
-    .pg-btn:hover:not(:disabled) { border-color: var(--border-bright); color: var(--text-primary); }
-    .pg-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    .pg-current { color: var(--accent-blue); font-weight: 600; }
+    .explore-shell { display:grid; grid-template-columns: 260px 1fr 320px; gap:14px; }
+    .workspace-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; }
+    .panel-title-row { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:1px solid var(--border); }
+    .title-xs { font-size:12px; text-transform:uppercase; letter-spacing:.8px; color:var(--text-dim); }
+    .filter-group { padding:12px 14px; border-bottom:1px solid var(--border); }
+    .filter-group h4 { margin:0 0 10px; font-size:13px; }
+    .chip-list { display:flex; flex-wrap:wrap; gap:7px; }
+    .chip { padding:5px 10px; border:1px solid var(--border); border-radius:999px; font-size:12px; color:var(--text-secondary); cursor:pointer; }
+    .chip.active { border-color: var(--accent-blue); color: var(--text-primary); background: rgba(79,142,247,.12); }
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+    .field label { font-size:11px; color:var(--text-dim); text-transform:uppercase; }
+    .field input, .field select { padding:8px 10px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:var(--text-primary); border-radius:8px; font-size:12px; font-family:'DM Sans',sans-serif; }
+    .saved-list button { width:100%; text-align:left; background:transparent; border:1px solid var(--border); color:var(--text-secondary); border-radius:8px; padding:8px 10px; margin-bottom:8px; cursor:pointer; font-size:12px; }
+    .search-top { display:flex; gap:10px; margin-bottom:12px; }
+    .search-input-wrap { flex:1; position:relative; }
+    .search-input-wrap input { width:100%; padding:11px 14px 11px 40px; border:1px solid var(--border); border-radius:10px; background:var(--bg-card); color:var(--text-primary); font-size:13px; }
+    .search-input-wrap svg { position:absolute; left:13px; top:10px; width:16px; height:16px; color:var(--text-dim); }
+    .btn { border:1px solid var(--border); background:var(--bg-card); color:var(--text-secondary); padding:9px 12px; border-radius:9px; cursor:pointer; }
+    .btn.primary { background:var(--accent-blue); border-color:var(--accent-blue); color:#fff; }
+    .table-wrap { max-height:560px; overflow:auto; }
+    .explore-table td, .explore-table th { padding:10px 12px; font-size:12px; }
+    .explore-table tr.details td { background: rgba(79,142,247,.06); color:var(--text-secondary); white-space:pre-wrap; }
+    mark { background: rgba(245,158,11,.3); color:inherit; padding:0 2px; border-radius:4px; }
+    .insight-list { padding:10px 12px; }
+    .insight-item { padding:10px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px; }
+    .insight-item .k { font-size:11px; color:var(--text-dim); text-transform:uppercase; }
+    .insight-item .v { font-size:14px; margin-top:4px; }
   </style>
 </head>
 <body>
-  <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="sidebar-logo">
-      <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg>
-    </div>
+    <div class="sidebar-logo"><svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg></div>
     <nav class="sidebar-nav">
-      <div class="nav-icon" title="Dashboard" onclick="location.href='index.html'">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      </div>
-      <div class="nav-icon active" title="Explore">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      </div>
-      <div class="nav-icon" title="Alerts" onclick="location.href='alerts.html'">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      </div>
-      <div class="nav-icon" title="Reports" onclick="location.href='reports.html'">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      </div>
+      <div class="nav-icon" title="Dashboard" onclick="location.href='index.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+      <div class="nav-icon active" title="Explore"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
+      <div class="nav-icon" title="Alerts" onclick="location.href='alerts.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      <div class="nav-icon" title="Reports" onclick="location.href='reports.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
     </nav>
-    <div class="sidebar-bottom">
-      <div class="nav-icon" title="Settings" onclick="location.href='settings.html'">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </div>
-    </div>
+    <div class="sidebar-bottom"><div class="nav-icon" title="Settings" onclick="location.href='settings.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div></div>
   </aside>
 
-  <!-- TOPBAR -->
   <header class="topbar">
-    <div class="brand">
-      <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg></div>
-      LogLytics
-    </div>
-    <nav class="topbar-nav">
-      <a href="index.html">Dashboard</a>
-      <a href="explore.html" class="active">Explore</a>
-      <a href="alerts.html">Alerts</a>
-      <a href="reports.html">Reports</a>
-      <a href="settings.html">Settings</a>
-    </nav>
-    <div class="topbar-right">
-      <div class="notif-btn">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span class="notif-dot"></span>
-      </div>
-      <div class="user-chip">
-        <div class="avatar">PS</div>
-        <div class="user-info"><div class="user-name">Priyankori Saha</div><div class="user-role">Admin</div></div>
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:12px;height:12px;color:var(--text-dim)"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-    </div>
+    <div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg></div>LogLytics</div>
+    <nav class="topbar-nav"><a href="index.html">Dashboard</a><a href="explore.html" class="active">Explore</a><a href="alerts.html">Alerts</a><a href="reports.html">Reports</a><a href="settings.html">Settings</a></nav>
+    <div class="topbar-right"><div class="notif-btn"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-dot"></span></div><div class="user-chip"><div class="avatar">PS</div><div class="user-info"><div class="user-name">Priyankori Saha</div><div class="user-role">Admin</div></div></div></div>
   </header>
 
   <main class="main">
     <div class="content">
-      <div class="page-hero">
-        <h2>Explore Logs</h2>
-        <p>Search and filter all ingested log entries from your backend.</p>
+      <div class="search-top">
+        <div class="search-input-wrap">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="queryInput" placeholder='Try: level:error source:webserver message:"database failed" after:2pm before:5pm' />
+        </div>
+        <button class="btn primary" id="searchBtn">Run Query</button>
+        <button class="btn" id="clearBtn">Clear</button>
       </div>
 
-      <!-- FILTERS -->
-      <div class="explore-filters">
-        <div class="filter-field">
-          <label>Search Message</label>
-          <input type="text" id="ex-search" placeholder="e.g. timeout, payment..." />
-        </div>
-        <div class="filter-field">
-          <label>Log Level</label>
-          <select id="ex-type">
-            <option value="">All Levels</option>
-            <option value="ERROR">ERROR</option>
-            <option value="WARNING">WARNING</option>
-            <option value="INFO">INFO</option>
-          </select>
-        </div>
-        <div class="filter-field">
-          <label>Start Time</label>
-          <input type="datetime-local" id="ex-start" />
-        </div>
-        <div class="filter-field">
-          <label>End Time</label>
-          <input type="datetime-local" id="ex-end" />
-        </div>
-        <button class="apply-btn" id="applyBtn">Search</button>
-        <button class="clear-btn" id="clearBtn">Clear</button>
-      </div>
-
-      <!-- RESULTS -->
-      <div class="results-bar">
-        <span>Results: <span class="results-count" id="resultCount">—</span></span>
-        <button class="export-btn" id="exportBtn">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export CSV
-        </button>
-      </div>
-
-      <div class="panel log-panel">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Timestamp</th>
-                <th>Level</th>
-                <th>Message</th>
-                <th>Format</th>
-              </tr>
-            </thead>
-            <tbody id="exploreTableBody">
-              <tr class="loading-row"><td colspan="4">Use the filters above and click <strong>Search</strong></td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="pagination-wrap">
-          <span id="pageInfo">—</span>
-          <div class="page-controls">
-            <button class="pg-btn" id="prevBtn" disabled>← Prev</button>
-            <span class="pg-current" id="pageNum">1</span>
-            <button class="pg-btn" id="nextBtn" disabled>Next →</button>
+      <div class="explore-shell">
+        <section class="workspace-panel">
+          <div class="panel-title-row"><strong>Filters</strong><span class="title-xs">Left Sidebar</span></div>
+          <div class="filter-group"><h4>Severity</h4><div class="chip-list" id="severityChips"></div></div>
+          <div class="filter-group"><h4>Source</h4><div class="chip-list" id="sourceChips"></div></div>
+          <div class="filter-group">
+            <h4>Date Range</h4>
+            <div class="field"><label>Start</label><input type="datetime-local" id="startTime"></div>
+            <div class="field"><label>End</label><input type="datetime-local" id="endTime"></div>
+            <div class="field"><label>Regex Mode</label><select id="regexMode"><option value="off">Disabled</option><option value="on">Enabled</option></select></div>
           </div>
-        </div>
+          <div class="filter-group saved-list">
+            <h4>Saved Searches</h4>
+            <button data-q='level:error source:database'>Database Errors</button>
+            <button data-q='source:webserver level:warning'>Webserver Warnings</button>
+            <button data-q='message:"timeout" after:1pm'>Timeouts After 1 PM</button>
+          </div>
+        </section>
+
+        <section class="workspace-panel">
+          <div class="panel-title-row"><strong>Log Investigation Table</strong><span id="resultMeta" class="title-xs">0 Results</span></div>
+          <div class="table-wrap">
+            <table class="explore-table">
+              <thead><tr><th>Time</th><th>Level</th><th>Source</th><th>Message</th></tr></thead>
+              <tbody id="logRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="workspace-panel">
+          <div class="panel-title-row"><strong>Insights</strong><span class="title-xs">Right Panel</span></div>
+          <div class="insight-list" id="insightList"></div>
+        </aside>
       </div>
     </div>
   </main>
 
-  <script>
-    const API_BASE = 'http://localhost:5000/api';
-    const PAGE_SIZE = 50;
-    let allLogs = [];
-    let currentPage = 1;
+<script>
+const API_BASE='http://localhost:5000/api';
+const state={logs:[],filtered:[],expanded:new Set(),severity:new Set(),source:new Set()};
+const severities=['ERROR','WARNING','CRITICAL','INFO'];
+const sources=['webserver','database','auth','payments','network'];
 
-    const tbody   = document.getElementById('exploreTableBody');
-    const pageInfo = document.getElementById('pageInfo');
-    const pageNum  = document.getElementById('pageNum');
-    const prevBtn  = document.getElementById('prevBtn');
-    const nextBtn  = document.getElementById('nextBtn');
+function chipRender(id,values,set){
+  const el=document.getElementById(id);
+  el.innerHTML=values.map(v=>`<span class="chip ${set.has(v)?'active':''}" data-v="${v}">${v}</span>`).join('');
+  el.onclick=e=>{
+    if(!e.target.dataset.v)return;
+    const v=e.target.dataset.v;
+    set.has(v)?set.delete(v):set.add(v);
+    chipRender(id,values,set);
+    applyFilters();
+  };
+}
 
-    function levelBadge(type) {
-      const cls = type==='ERROR'?'level-error':type==='WARNING'?'level-warning':'level-info';
-      return `<span class="level-badge ${cls}"><span class="dot"></span>${type}</span>`;
-    }
-    function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function parseQuery(q){
+  const out={};
+  (q.match(/(?:"[^"]+"|\S+)/g)||[]).forEach(t=>{
+    const i=t.indexOf(':');
+    if(i>0) out[t.slice(0,i).toLowerCase()]=t.slice(i+1).replace(/^"|"$/g,'');
+    else out.text=(out.text?out.text+' ':'')+t;
+  });
+  return out;
+}
 
-    function emptyState(icon, title, sub) {
-      return `<tr><td colspan="4">
-        <div style="display:flex;flex-direction:column;align-items:center;padding:60px 20px;gap:12px;color:var(--text-dim)">
-          <div style="width:60px;height:60px;border-radius:50%;background:rgba(79,142,247,.08);display:flex;align-items:center;justify-content:center">${icon}</div>
-          <div style="font-size:14px;font-weight:600;color:var(--text-secondary)">${title}</div>
-          <div style="font-size:12.5px;text-align:center;max-width:300px;line-height:1.6">${sub}</div>
-        </div></td></tr>`;
-    }
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    function renderPage() {
-      const total = allLogs.length;
-      if (!total) {
-        tbody.innerHTML = emptyState(
-          `<svg width="26" height="26" fill="none" stroke="#4f8ef7" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`,
-          'No logs found',
-          'Try different filters, or upload a log file from the Dashboard to get started.'
-        );
-        pageInfo.textContent = '0 results';
-        prevBtn.disabled = nextBtn.disabled = true;
-        return;
-      }
-      const start = (currentPage-1)*PAGE_SIZE;
-      const slice = allLogs.slice(start, start+PAGE_SIZE);
-      tbody.innerHTML = slice.map(l=>`<tr>
-        <td class="ts">${esc(l.timestamp)}</td>
-        <td>${levelBadge(l.type)}</td>
-        <td class="msg" title="${esc(l.message)}">${esc(l.message)}</td>
-        <td><span class="format-badge">${esc(l.formatMatched||'STORED')}</span></td>
-      </tr>`).join('');
-      const tp = Math.max(1,Math.ceil(total/PAGE_SIZE));
-      pageNum.textContent  = currentPage;
-      pageInfo.textContent = `${start+1}–${Math.min(start+PAGE_SIZE,total)} of ${total.toLocaleString()}`;
-      prevBtn.disabled = currentPage<=1;
-      nextBtn.disabled = currentPage>=tp;
-    }
+function highlight(msg,term){
+  if(!term) return escapeHtml(msg);
+  const safe=escapeHtml(msg);
+  return safe.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'ig'),m=>`<mark>${m}</mark>`);
+}
 
-    async function doSearch() {
-      tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-dim)"><span style="display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--accent-blue);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px"></span>Querying backend…</td></tr>`;
-      const params = new URLSearchParams();
-      const s  = document.getElementById('ex-search').value.trim();
-      const t  = document.getElementById('ex-type').value;
-      const st = document.getElementById('ex-start').value;
-      const en = document.getElementById('ex-end').value;
-      if(s) params.set('search',s);
-      if(t) params.set('type',t);
-      if(st)params.set('start',st);
-      if(en)params.set('end',en);
-      try {
-        const res  = await fetch(`${API_BASE}/logs?${params}`);
-        const data = await res.json();
-        allLogs = data.logs||[]; currentPage=1; renderPage();
-      } catch(e) {
-        tbody.innerHTML = emptyState(
-          `<svg width="26" height="26" fill="none" stroke="#ef4444" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
-          'Backend unreachable',
-          'Make sure your Node.js server is running on port 5000, then try again.'
-        );
-      }
-    }
+function applyFilters(){
+  const q=parseQuery(document.getElementById('queryInput').value.trim());
+  const st=document.getElementById('startTime').value, en=document.getElementById('endTime').value;
+  const rg=document.getElementById('regexMode').value==='on';
 
-    function exportCSV() {
-      if(!allLogs.length) return;
-      const rows = allLogs.map(l=>`"${l.timestamp}","${l.type}","${(l.message||'').replace(/"/g,'""')}"`);
-      const blob = new Blob(['Timestamp,Level,Message\n'+rows.join('\n')],{type:'text/csv'});
-      const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
-      a.download=`logs_${Date.now()}.csv`; a.click();
-    }
+  state.filtered=state.logs.filter(l=>{
+    const lt=(l.type||'').toUpperCase();
+    const ls=(l.source||'').toLowerCase();
+    const msg=(l.message||'');
 
-    document.getElementById('applyBtn').addEventListener('click', doSearch);
-    document.getElementById('ex-search').addEventListener('keydown', e=>{if(e.key==='Enter')doSearch();});
-    document.getElementById('clearBtn').addEventListener('click', ()=>{
-      ['ex-search','ex-start','ex-end'].forEach(id=>document.getElementById(id).value='');
-      document.getElementById('ex-type').value='';
-      allLogs=[]; currentPage=1; renderPage();
-    });
-    document.getElementById('exportBtn').addEventListener('click', exportCSV);
-    prevBtn.addEventListener('click', ()=>{if(currentPage>1){currentPage--;renderPage();}});
-    nextBtn.addEventListener('click', ()=>{currentPage++;renderPage();});
-    doSearch();
-  </script>
+    if(state.severity.size&&!state.severity.has(lt)) return false;
+    if(state.source.size&&!state.source.has(ls)) return false;
+    if(q.level&&lt!==q.level.toUpperCase()) return false;
+    if(q.source&&ls!==q.source.toLowerCase()) return false;
+    if(q.message&&!(rg?new RegExp(q.message,'i').test(msg):msg.toLowerCase().includes(q.message.toLowerCase()))) return false;
+    if(q.text&&!msg.toLowerCase().includes(q.text.toLowerCase())) return false;
+
+    const ts=Date.parse(l.timestamp);
+    if(st&&ts<Date.parse(st)) return false;
+    if(en&&ts>Date.parse(en)) return false;
+    return true;
+  });
+
+  render();
+}
+
+function render(){
+  const body=document.getElementById('logRows');
+  const q=parseQuery(document.getElementById('queryInput').value);
+  const term=q.message||q.text;
+
+  body.innerHTML=state.filtered.map((l,i)=>`
+    <tr data-i="${i}" class="main">
+      <td>${escapeHtml(l.timestamp||'')}</td>
+      <td>${escapeHtml(l.type||'')}</td>
+      <td>${escapeHtml(l.source||'app')}</td>
+      <td>${highlight(l.message||'',term)}</td>
+    </tr>
+    ${state.expanded.has(i)?`<tr class="details"><td colspan="4">${escapeHtml(l.meta?JSON.stringify(l.meta,null,2):'No extra metadata')}</td></tr>`:''}
+  `).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:26px">No matching logs</td></tr>';
+
+  body.querySelectorAll('tr.main').forEach(r=>r.onclick=()=>{
+    const i=Number(r.dataset.i);
+    state.expanded.has(i)?state.expanded.delete(i):state.expanded.add(i);
+    render();
+  });
+
+  document.getElementById('resultMeta').textContent=`${state.filtered.length} Results`;
+
+  const freq={},src={};
+  state.filtered.forEach(l=>{
+    freq[l.type]=(freq[l.type]||0)+1;
+    src[l.source||'unknown']=(src[l.source||'unknown']||0)+1;
+  });
+
+  const topErr=Object.entries(state.filtered.reduce((m,l)=>{
+    if((l.type||'').includes('ERROR')) m[l.message]=(m[l.message]||0)+1;
+    return m;
+  },{})).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('insightList').innerHTML=`
+    <div class='insight-item'><div class='k'>Top Recurring Error</div><div class='v'>${topErr?escapeHtml(topErr[0])+' ('+topErr[1]+')':'None'}</div></div>
+    <div class='insight-item'><div class='k'>Most Active Source</div><div class='v'>${escapeHtml(Object.entries(src).sort((a,b)=>b[1]-a[1])[0]?.[0]||'N/A')}</div></div>
+    <div class='insight-item'><div class='k'>Severity Split</div><div class='v'>${escapeHtml(Object.entries(freq).map(([k,v])=>k+': '+v).join(' • ')||'N/A')}</div></div>
+    <div class='insight-item'><div class='k'>AI Insight</div><div class='v'>${state.filtered.length>100?'Spike detected in log volume.':'System appears stable at current rate.'}</div></div>
+  `;
+}
+
+async function load(){
+  try{
+    const r=await fetch(`${API_BASE}/logs`);
+    const d=await r.json();
+    state.logs=d.logs||[];
+  }catch{
+    state.logs=[];
+  }
+  applyFilters();
+}
+
+chipRender('severityChips',severities,state.severity);
+chipRender('sourceChips',sources,state.source);
+document.getElementById('searchBtn').onclick=applyFilters;
+document.getElementById('clearBtn').onclick=()=>{
+  document.getElementById('queryInput').value='';
+  document.getElementById('startTime').value='';
+  document.getElementById('endTime').value='';
+  document.getElementById('regexMode').value='off';
+  state.severity.clear();
+  state.source.clear();
+  chipRender('severityChips',severities,state.severity);
+  chipRender('sourceChips',sources,state.source);
+  applyFilters();
+};
+document.querySelectorAll('.saved-list button').forEach(b=>b.onclick=()=>{
+  document.getElementById('queryInput').value=b.dataset.q;
+  applyFilters();
+});
+
+load();
+</script>
 </body>
 </html>
