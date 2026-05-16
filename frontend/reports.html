@@ -1,373 +1,509 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LogLytics — Reports</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
   <style>
-    .page-hero { margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
-    .page-hero h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-    .page-hero p  { font-size: 13px; color: var(--text-secondary); }
+    .page-title{font-size:19px;font-weight:700;margin-bottom:2px}
+    .page-sub{font-size:12.5px;color:var(--text-secondary);margin-bottom:20px}
 
-    .report-actions { display: flex; gap: 8px; }
-    .act-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 12.5px; font-weight: 600;
-      cursor: pointer; font-family: 'DM Sans', sans-serif;
-      transition: all 0.2s; border: none;
-    }
-    .act-btn svg { width: 14px; height: 14px; }
-    .act-btn.primary { background: var(--accent-blue); color: white; }
-    .act-btn.primary:hover { opacity: 0.85; }
-    .act-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
-    .act-btn.secondary:hover { border-color: var(--border-bright); color: var(--text-primary); }
+    /* top action bar */
+    .report-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+    .report-actions{display:flex;gap:8px}
+    .act-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;
+      font-size:12.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;
+      transition:all .2s;border:none}
+    .act-btn svg{width:14px;height:14px}
+    .act-btn.primary{background:var(--accent-blue);color:white}
+    .act-btn.primary:hover{opacity:.85}
+    .act-btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text-secondary)}
+    .act-btn.secondary:hover{border-color:var(--border-bright);color:var(--text-primary)}
+    .act-btn.green{background:rgba(34,197,94,.1);color:var(--accent-green);border:1px solid rgba(34,197,94,.25)}
+    .act-btn.green:hover{background:rgba(34,197,94,.2)}
 
-    .report-stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .r-stat {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px;
-      text-align: center;
-    }
-    .r-stat-label { font-size: 11.5px; color: var(--text-secondary); margin-bottom: 8px; }
-    .r-stat-val { font-family: 'Space Mono', monospace; font-size: 30px; font-weight: 700; }
-    .r-stat-val.blue { color: var(--accent-blue); }
-    .r-stat-val.red  { color: var(--accent-red); }
-    .r-stat-val.yellow { color: var(--accent-yellow); }
-    .r-stat-val.green { color: var(--accent-green); }
-    .r-stat-sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+    /* stat row */
+    .report-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+    .r-stat{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+      padding:18px;text-align:center}
+    .r-stat-label{font-size:11.5px;color:var(--text-secondary);margin-bottom:6px}
+    .r-stat-val{font-family:'Space Mono',monospace;font-size:30px;font-weight:700}
+    .r-stat-val.blue{color:var(--accent-blue)} .r-stat-val.red{color:var(--accent-red)}
+    .r-stat-val.yellow{color:var(--accent-yellow)} .r-stat-val.green{color:var(--accent-green)}
+    .r-stat-sub{font-size:11px;color:var(--text-dim);margin-top:4px}
 
-    .charts-2col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-bottom: 14px;
-    }
+    /* charts */
+    .charts-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+    @media(max-width:800px){.charts-2col{grid-template-columns:1fr}}
+    .chart-canvas-wrap{position:relative;height:200px;width:100%}
+    .chart-canvas-wrap canvas{display:block}
 
-    .chart-canvas-wrap { position: relative; height: 200px; width: 100%; }
-    .chart-canvas-wrap canvas { display: block; }
+    /* patterns widget */
+    .patterns-section{margin-bottom:16px}
+    .section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+      color:var(--text-dim);margin-bottom:10px}
+    .pattern-row{display:flex;align-items:center;gap:12px;padding:11px 18px;
+      border-bottom:1px solid rgba(255,255,255,.03);font-size:12.5px}
+    .pattern-row:last-child{border-bottom:none}
+    .pat-rank{font-family:'Space Mono',monospace;color:var(--text-dim);width:20px;flex-shrink:0}
+    .pat-text{flex:1;min-width:0;color:var(--text-primary);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pat-bar-wrap{width:100px;flex-shrink:0}
+    .pat-bar{height:4px;border-radius:2px;background:var(--accent-red)}
+    .pat-count{font-family:'Space Mono',monospace;font-size:12px;
+      color:var(--accent-red);width:32px;text-align:right;flex-shrink:0}
+    .pat-sev{flex-shrink:0}
 
-    .top-messages {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .top-msg-header {
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px; font-weight: 600; color: var(--text-primary);
-    }
-    .top-msg-row {
-      display: flex; align-items: center; gap: 12px;
-      padding: 11px 18px;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-      font-size: 12.5px;
-    }
-    .top-msg-row:last-child { border-bottom: none; }
-    .top-msg-rank { font-family: 'Space Mono', monospace; color: var(--text-dim); width: 20px; flex-shrink: 0; }
-    .top-msg-text { flex: 1; min-width: 0; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .top-msg-bar-wrap { width: 120px; flex-shrink: 0; }
-    .top-msg-bar { height: 4px; border-radius: 2px; background: var(--accent-red); }
-    .top-msg-count { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--accent-red); width: 32px; text-align: right; flex-shrink: 0; }
+    /* export modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);
+      backdrop-filter:blur(4px);z-index:1000;display:none;
+      align-items:center;justify-content:center}
+    .modal-overlay.open{display:flex}
+    .modal{background:#0f1520;border:1px solid var(--border-bright);border-radius:16px;
+      padding:28px;width:480px;max-width:95vw;position:relative}
+    body.light .modal{background:#ffffff}
+    .modal-title{font-size:16px;font-weight:700;margin-bottom:4px}
+    .modal-sub{font-size:12.5px;color:var(--text-secondary);margin-bottom:24px}
+    .modal-close{position:absolute;top:16px;right:16px;width:28px;height:28px;
+      display:flex;align-items:center;justify-content:center;border-radius:6px;
+      background:var(--bg-panel);border:1px solid var(--border);cursor:pointer;
+      color:var(--text-secondary);transition:all .2s}
+    .modal-close:hover{border-color:var(--border-bright);color:var(--text-primary)}
 
-    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .export-options{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+    .export-opt{padding:16px 12px;border:2px solid var(--border);border-radius:10px;
+      text-align:center;cursor:pointer;transition:all .2s;position:relative}
+    .export-opt:hover{border-color:var(--border-bright)}
+    .export-opt.selected{border-color:var(--accent-blue);background:rgba(79,142,247,.06)}
+    .export-opt-icon{font-size:24px;margin-bottom:8px}
+    .export-opt-label{font-size:13px;font-weight:600;color:var(--text-primary)}
+    .export-opt-sub{font-size:11px;color:var(--text-dim);margin-top:3px}
+
+    .export-includes{margin-bottom:20px}
+    .export-includes-title{font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:10px}
+    .check-row{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:var(--text-secondary)}
+    .check-row input{accent-color:var(--accent-blue);width:15px;height:15px;cursor:pointer}
+
+    .modal-footer{display:flex;gap:8px;justify-content:flex-end}
+    .btn-cancel{padding:9px 18px;background:transparent;border:1px solid var(--border);
+      border-radius:8px;color:var(--text-secondary);cursor:pointer;font-size:13px;
+      font-family:'DM Sans',sans-serif;transition:all .2s}
+    .btn-cancel:hover{border-color:var(--border-bright);color:var(--text-primary)}
+    .btn-download{padding:9px 22px;background:var(--accent-blue);color:white;border:none;
+      border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+      font-family:'DM Sans',sans-serif;transition:opacity .2s}
+    .btn-download:hover{opacity:.85}
+
+    /* progress */
+    .export-progress{display:none;text-align:center;padding:20px 0}
+    .export-progress.show{display:block}
+    .progress-bar{width:100%;height:4px;background:rgba(255,255,255,.08);
+      border-radius:2px;overflow:hidden;margin:12px 0}
+    .progress-fill{height:100%;background:var(--accent-blue);border-radius:2px;
+      transition:width .3s;width:0}
+    .progress-label{font-size:12.5px;color:var(--text-secondary)}
+
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.1);
+      border-top-color:var(--accent-blue);border-radius:50%;
+      animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .empty-insights{display:flex;flex-direction:column;align-items:center;
+      padding:40px 20px;gap:10px;color:var(--text-dim)}
+    .empty-insights svg{width:32px;height:32px;opacity:.3}
+    .empty-insights-title{font-size:14px;font-weight:600;color:var(--text-secondary)}
+    .empty-insights-sub{font-size:12px;text-align:center;max-width:260px;line-height:1.6}
   </style>
 </head>
 <body>
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg>
+
+<aside class="sidebar">
+  <div class="sidebar-logo"><svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg></div>
+  <nav class="sidebar-nav">
+    <div class="nav-icon" title="Dashboard" onclick="location.href='index.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+    <div class="nav-icon" title="Explore" onclick="location.href='explore.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
+    <div class="nav-icon" title="Alerts" onclick="location.href='alerts.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+    <div class="nav-icon active" title="Reports"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="nav-icon" title="Settings" onclick="location.href='settings.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l-.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+  </div>
+</aside>
+
+<header class="topbar">
+  <div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg></div>LogLytics</div>
+  <nav class="topbar-nav">
+    <a href="index.html">Dashboard</a><a href="explore.html">Explore</a>
+    <a href="alerts.html">Alerts</a>
+    <a href="reports.html" class="active">Reports</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="theme-toggle" id="themeToggle" title="Toggle theme">
+      <svg class="icon-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
     </div>
-    <nav class="sidebar-nav">
-      <div class="nav-icon" title="Dashboard" onclick="location.href='index.html'">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <div class="notif-btn" onclick="location.href='alerts.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-dot"></span></div>
+    <div class="user-chip"><div class="avatar">PS</div><div class="user-info"><div class="user-name">Priyankori Saha</div><div class="user-role">Admin</div></div></div>
+  </div>
+</header>
+
+<main class="main">
+  <div class="content">
+    <div class="report-topbar">
+      <div>
+        <div class="page-title">Reports</div>
+        <div class="page-sub">Aggregated statistics, pattern analysis and exportable summaries.</div>
       </div>
-      <div class="nav-icon" title="Explore" onclick="location.href='explore.html'">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      </div>
-      <div class="nav-icon" title="Alerts" onclick="location.href='alerts.html'">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      </div>
-      <div class="nav-icon active" title="Reports">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      </div>
-    </nav>
-    <div class="sidebar-bottom">
-      <div class="nav-icon" title="Settings" onclick="location.href='settings.html'">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l-.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <div class="report-actions">
+        <button class="act-btn secondary" onclick="openExportModal()">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Report
+        </button>
+        <button class="act-btn primary" id="refreshBtn">
+          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
       </div>
     </div>
-  </aside>
 
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg></div>
-      LogLytics
+    <!-- Stats -->
+    <div class="report-stats">
+      <div class="r-stat"><div class="r-stat-label">Total Logs</div><div class="r-stat-val blue" id="rTotal">—</div><div class="r-stat-sub">all time</div></div>
+      <div class="r-stat"><div class="r-stat-label">Errors</div><div class="r-stat-val red" id="rErrors">—</div><div class="r-stat-sub" id="rErrPct">—</div></div>
+      <div class="r-stat"><div class="r-stat-label">Warnings</div><div class="r-stat-val yellow" id="rWarnings">—</div><div class="r-stat-sub" id="rWarnPct">—</div></div>
+      <div class="r-stat"><div class="r-stat-label">Info</div><div class="r-stat-val green" id="rInfo">—</div><div class="r-stat-sub" id="rInfoPct">—</div></div>
     </div>
-    <nav class="topbar-nav">
-      <a href="index.html">Dashboard</a>
-      <a href="explore.html">Explore</a>
-      <a href="alerts.html">Alerts</a>
-      <a href="reports.html" class="active">Reports</a>
-      <a href="settings.html">Settings</a>
-    </nav>
-    <div class="topbar-right">
-      <div class="notif-btn">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span class="notif-dot"></span>
+
+    <!-- Charts -->
+    <div class="charts-2col">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Log Type Breakdown</span></div>
+        <div class="chart-wrap"><div class="chart-canvas-wrap"><canvas id="barChart"></canvas></div></div>
       </div>
-      <div class="user-chip">
-        <div class="avatar">PS</div>
-        <div class="user-info"><div class="user-name">Priyankori Saha</div><div class="user-role">Admin</div></div>
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:12px;height:12px;color:var(--text-dim)"><polyline points="6 9 12 15 18 9"/></svg>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Distribution</span></div>
+        <div class="chart-wrap"><div class="chart-canvas-wrap"><canvas id="pieChart"></canvas></div></div>
       </div>
     </div>
-  </header>
 
-  <main class="main">
-    <div class="content">
-      <div class="page-hero">
-        <div>
-          <h2>Reports</h2>
-          <p>Aggregated statistics and exportable summaries from your log database.</p>
+    <!-- Top Error Patterns widget (Feature 3) -->
+    <div class="patterns-section">
+      <div class="section-label">🔴 Top Error Patterns — detected via HashMap + pattern normalization</div>
+      <div class="panel top-messages">
+        <div style="padding:11px 18px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--text-primary);display:flex;align-items:center;justify-content:space-between">
+          Recurring Issues
+          <span style="font-size:11px;color:var(--text-dim);font-weight:400">Normalized by {n}=number, {id}=hash</span>
         </div>
-        <div class="report-actions">
-          <button class="act-btn secondary" id="exportCsvBtn">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Export CSV
-          </button>
-          <button class="act-btn secondary" id="exportJsonBtn">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Export JSON
-          </button>
-          <button class="act-btn primary" id="refreshBtn">
-            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      <!-- Summary stats -->
-      <div class="report-stats">
-        <div class="r-stat">
-          <div class="r-stat-label">Total Logs</div>
-          <div class="r-stat-val blue" id="rTotal">—</div>
-          <div class="r-stat-sub">all time</div>
-        </div>
-        <div class="r-stat">
-          <div class="r-stat-label">Total Errors</div>
-          <div class="r-stat-val red" id="rErrors">—</div>
-          <div class="r-stat-sub" id="rErrorPct">—</div>
-        </div>
-        <div class="r-stat">
-          <div class="r-stat-label">Total Warnings</div>
-          <div class="r-stat-val yellow" id="rWarnings">—</div>
-          <div class="r-stat-sub" id="rWarnPct">—</div>
-        </div>
-        <div class="r-stat">
-          <div class="r-stat-label">Info Events</div>
-          <div class="r-stat-val green" id="rInfo">—</div>
-          <div class="r-stat-sub" id="rInfoPct">—</div>
-        </div>
-      </div>
-
-      <!-- Charts -->
-      <div class="charts-2col">
-        <div class="panel">
-          <div class="panel-header"><span class="panel-title">Log Type Breakdown</span></div>
-          <div class="chart-wrap">
-            <div class="chart-canvas-wrap"><canvas id="barChart"></canvas></div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><span class="panel-title">Distribution</span></div>
-          <div class="chart-wrap">
-            <div class="chart-canvas-wrap"><canvas id="pieChart"></canvas></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Top repeated messages -->
-      <div class="top-messages">
-        <div class="top-msg-header">Top Repeated Error Messages</div>
-        <div id="topMsgList">
-          <div style="padding:30px;text-align:center;color:var(--text-dim)"><span class="spinner"></span></div>
+        <div id="patternList">
+          <div style="text-align:center;padding:30px;color:var(--text-dim)"><span class="spinner"></span></div>
         </div>
       </div>
     </div>
-  </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script>
-    const API_BASE = 'http://localhost:5000/api';
-    let allLogs = [];
+    <!-- Alert history summary -->
+    <div class="section-label">⚡ Recent Alert Triggers</div>
+    <div class="panel log-panel" id="alertHistoryPanel">
+      <div style="text-align:center;padding:30px;color:var(--text-dim)"><span class="spinner"></span></div>
+    </div>
 
-    const chartDefaults = {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: 'rgba(10,16,28,0.92)',
-          borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
-          titleColor: '#7a8aa0', bodyColor: '#e8edf5',
-          titleFont: { family: "'Space Mono', monospace", size: 10 },
-          bodyFont: { family: "'DM Sans', sans-serif", size: 12 },
-          padding: 10,
-        }
-      }
-    };
+  </div>
+</main>
 
-    let barChart, pieChart;
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <div class="modal-close" onclick="closeExportModal()">✕</div>
+    <div class="modal-title">Export Report</div>
+    <div class="modal-sub">Choose format and content to include in your export.</div>
 
-    function buildCharts(summary) {
-      const labels = ['ERROR', 'WARNING', 'INFO'];
-      const values = [summary.ERROR, summary.WARNING, summary.INFO];
-      const colors = ['#ef4444', '#f59e0b', '#22c55e'];
+    <div class="export-options">
+      <div class="export-opt selected" id="opt-csv" onclick="selectFormat('csv')">
+        <div class="export-opt-icon">📄</div>
+        <div class="export-opt-label">CSV</div>
+        <div class="export-opt-sub">Spreadsheet</div>
+      </div>
+      <div class="export-opt" id="opt-json" onclick="selectFormat('json')">
+        <div class="export-opt-icon">{ }</div>
+        <div class="export-opt-label">JSON</div>
+        <div class="export-opt-sub">Raw data</div>
+      </div>
+      <div class="export-opt" id="opt-pdf" onclick="selectFormat('pdf')">
+        <div class="export-opt-icon">📋</div>
+        <div class="export-opt-label">PDF</div>
+        <div class="export-opt-sub">Full report</div>
+      </div>
+    </div>
 
-      if (barChart) barChart.destroy();
-      barChart = new Chart(document.getElementById('barChart'), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            data: values,
-            backgroundColor: colors.map(c => c + '33'),
-            borderColor: colors,
-            borderWidth: 2,
-            borderRadius: 6,
-          }]
-        },
-        options: {
-          ...chartDefaults,
-          scales: {
-            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#4a5568', font: { size: 11 } }, border: { display: false } },
-            y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#4a5568', font: { size: 11 } }, border: { display: false } }
-          }
-        }
-      });
+    <div class="export-includes">
+      <div class="export-includes-title">Include in export:</div>
+      <div class="check-row"><input type="checkbox" id="chkLogs" checked/><label for="chkLogs">All log entries</label></div>
+      <div class="check-row"><input type="checkbox" id="chkPatterns" checked/><label for="chkPatterns">Error patterns analysis</label></div>
+      <div class="check-row"><input type="checkbox" id="chkAlerts" checked/><label for="chkAlerts">Alert history</label></div>
+      <div class="check-row"><input type="checkbox" id="chkSummary" checked/><label for="chkSummary">Summary statistics</label></div>
+    </div>
 
-      if (pieChart) pieChart.destroy();
-      pieChart = new Chart(document.getElementById('pieChart'), {
-        type: 'doughnut',
-        data: {
-          labels,
-          datasets: [{ data: values, backgroundColor: colors, borderColor: 'rgba(8,12,20,0)', borderWidth: 3, hoverOffset: 6 }]
-        },
-        options: {
-          ...chartDefaults,
-          cutout: '60%',
-          plugins: {
-            ...chartDefaults.plugins,
-            legend: {
-              display: true,
-              position: 'bottom',
-              labels: { color: '#7a8aa0', font: { size: 11 }, padding: 16, boxWidth: 10 }
-            }
-          }
-        }
-      });
+    <div class="export-progress" id="exportProgress">
+      <div class="progress-label" id="progressLabel">Preparing export…</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="modal-footer" id="modalFooter">
+      <button class="btn-cancel" onclick="closeExportModal()">Cancel</button>
+      <button class="btn-download" onclick="doExport()">Download</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const API='http://localhost:5000/api';
+let cachedData=null;
+let selectedFormat='csv';
+let barChart,pieChart;
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+/* ── Load data from /exports endpoint ── */
+async function load(){
+  try{
+    const r=await fetch(`${API}/exports`);
+    const d=await r.json();
+    cachedData=d;
+
+    const logs=d.logs||[];
+    const summary=logs.reduce((a,l)=>{a[l.type]=(a[l.type]||0)+1;return a},{ERROR:0,WARNING:0,INFO:0,CRITICAL:0});
+    const total=logs.length;
+
+    document.getElementById('rTotal').textContent=total.toLocaleString();
+    document.getElementById('rErrors').textContent=(summary.ERROR||0).toLocaleString();
+    document.getElementById('rWarnings').textContent=(summary.WARNING||0).toLocaleString();
+    document.getElementById('rInfo').textContent=(summary.INFO||0).toLocaleString();
+    const pct=v=>total>0?((v/total)*100).toFixed(1)+'% of total':'—';
+    document.getElementById('rErrPct').textContent=pct(summary.ERROR||0);
+    document.getElementById('rWarnPct').textContent=pct(summary.WARNING||0);
+    document.getElementById('rInfoPct').textContent=pct(summary.INFO||0);
+
+    buildCharts(summary);
+    renderPatterns(d.patterns||[]);
+    renderAlertHistory(d.alerts||[]);
+  }catch(e){
+    document.getElementById('rTotal').textContent='—';
+    document.getElementById('patternList').innerHTML=emptyState(
+      '🔌','Backend unreachable','Start your Node.js server on port 5000 then click Refresh.');
+    document.getElementById('alertHistoryPanel').innerHTML=
+      '<div style="padding:24px;text-align:center;color:var(--accent-red)">Backend unreachable</div>';
+  }
+}
+
+/* ── Charts ── */
+function buildCharts(s){
+  const labels=['ERROR','WARNING','INFO','CRITICAL'];
+  const values=[s.ERROR||0,s.WARNING||0,s.INFO||0,s.CRITICAL||0];
+  const colors=['#ef4444','#f59e0b','#22c55e','#a78bfa'];
+  const opts={responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{
+      backgroundColor:'rgba(10,16,28,.92)',borderColor:'rgba(255,255,255,.1)',borderWidth:1,
+      titleColor:'#7a8aa0',bodyColor:'#e8edf5',padding:10,
+      titleFont:{family:"'Space Mono',monospace",size:10},
+      bodyFont:{family:"'DM Sans',sans-serif",size:12}}}};
+  if(barChart)barChart.destroy();
+  barChart=new Chart(document.getElementById('barChart'),{type:'bar',
+    data:{labels,datasets:[{data:values,backgroundColor:colors.map(c=>c+'33'),
+      borderColor:colors,borderWidth:2,borderRadius:6}]},
+    options:{...opts,scales:{
+      x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5568',font:{size:11}},border:{display:false}},
+      y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5568',font:{size:11}},border:{display:false}}}}});
+  if(pieChart)pieChart.destroy();
+  pieChart=new Chart(document.getElementById('pieChart'),{type:'doughnut',
+    data:{labels,datasets:[{data:values,backgroundColor:colors,borderColor:'rgba(8,12,20,0)',borderWidth:3,hoverOffset:6}]},
+    options:{...opts,cutout:'60%',plugins:{...opts.plugins,
+      legend:{display:true,position:'bottom',labels:{color:'#7a8aa0',font:{size:11},padding:16,boxWidth:10}}}}});
+}
+
+/* ── Patterns (Feature 3) ── */
+function renderPatterns(patterns){
+  const el=document.getElementById('patternList');
+  if(!patterns.length){
+    el.innerHTML=emptyState('✅','No recurring issues','No repeated error patterns found in your logs.');
+    return;
+  }
+  const max=patterns[0]?.count||1;
+  el.innerHTML=patterns.map((p,i)=>`
+    <div class="pattern-row">
+      <span class="pat-rank">${i+1}</span>
+      <span class="pat-text" title="${esc(p.pattern||p.message||'')}">${esc(p.pattern||p.message||'')}</span>
+      <div class="pat-bar-wrap"><div class="pat-bar" style="width:${Math.round((p.count/max)*100)}%"></div></div>
+      <span class="pat-count">×${p.count}</span>
+      <span class="pat-sev">${p.severity?`<span class="level-badge ${p.severity==='ERROR'?'level-error':'level-warning'}"><span class="dot"></span>${p.severity}</span>`:''}
+      </span>
+    </div>`).join('');
+}
+
+/* ── Alert history ── */
+function renderAlertHistory(alerts){
+  const el=document.getElementById('alertHistoryPanel');
+  if(!alerts.length){
+    el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:10px">
+      <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:.3"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <div style="font-size:14px;font-weight:600;color:var(--text-secondary)">No alert history</div>
+      <div style="font-size:12px;color:var(--text-dim);text-align:center;line-height:1.6">Go to Alerts, create rules and evaluate them to see trigger history here.</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>Triggered At</th><th>Rule</th><th>Severity</th></tr></thead>
+    <tbody>${alerts.slice(0,20).map(h=>`<tr>
+      <td class="ts">${esc(new Date(h.triggeredAt).toLocaleString())}</td>
+      <td style="color:var(--text-primary)">${esc(h.ruleName)}</td>
+      <td><span class="level-badge level-error"><span class="dot"></span>${esc(h.severity||'ERROR')}</span></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function emptyState(icon,title,sub){
+  return`<div style="display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:10px">
+    <div style="font-size:32px">${icon}</div>
+    <div style="font-size:14px;font-weight:600;color:var(--text-secondary)">${title}</div>
+    <div style="font-size:12px;color:var(--text-dim);text-align:center;max-width:260px;line-height:1.6">${sub}</div>
+  </div>`;
+}
+
+/* ── Export Modal ── */
+function openExportModal(){document.getElementById('exportModal').classList.add('open')}
+function closeExportModal(){
+  document.getElementById('exportModal').classList.remove('open');
+  document.getElementById('exportProgress').classList.remove('show');
+  document.getElementById('progressFill').style.width='0';
+  document.getElementById('modalFooter').style.display='flex';
+}
+function selectFormat(fmt){
+  selectedFormat=fmt;
+  ['csv','json','pdf'].forEach(f=>{
+    document.getElementById('opt-'+f).classList.toggle('selected',f===fmt);
+  });
+}
+
+function setProgress(pct,label){
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressLabel').textContent=label;
+}
+
+async function doExport(){
+  document.getElementById('exportProgress').classList.add('show');
+  document.getElementById('modalFooter').style.display='none';
+
+  setProgress(20,'Fetching data from backend…');
+  let data=cachedData;
+  if(!data){
+    try{const r=await fetch(`${API}/exports`);data=await r.json();}
+    catch(e){
+      setProgress(100,'❌ Backend unreachable');
+      setTimeout(()=>closeExportModal(),2000);return;
     }
+  }
 
-    function renderTopMessages(errors) {
-      const map = {};
-      errors.forEach(l => { const k = l.message.trim(); map[k] = (map[k]||0) + 1; });
-      const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0, 10);
-      const maxCount = sorted[0]?.[1] || 1;
-      const container = document.getElementById('topMsgList');
-      if (!sorted.length) {
-        container.innerHTML = `
-          <div style="display:flex;flex-direction:column;align-items:center;padding:48px 20px;gap:12px">
-            <div style="width:56px;height:56px;border-radius:50%;background:rgba(34,197,94,.1);
-              display:flex;align-items:center;justify-content:center">
-              <svg width="26" height="26" fill="none" stroke="#22c55e" stroke-width="1.8" viewBox="0 0 24 24">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <div style="font-size:14px;font-weight:600;color:var(--accent-green)">No Errors Found</div>
-            <div style="font-size:12.5px;color:var(--text-secondary);text-align:center;line-height:1.6">
-              Upload a log file from the Dashboard to see error analysis here.
-            </div>
-          </div>`;
-        return;
-      }
-      container.innerHTML = sorted.map(([msg, count], i) => `
-        <div class="top-msg-row">
-          <span class="top-msg-rank">${i+1}</span>
-          <span class="top-msg-text" title="${msg.replace(/"/g,'&quot;')}">${msg.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>
-          <div class="top-msg-bar-wrap">
-            <div class="top-msg-bar" style="width:${Math.round((count/maxCount)*100)}%"></div>
-          </div>
-          <span class="top-msg-count">${count}</span>
-        </div>`).join('');
-    }
+  setProgress(60,'Generating '+selectedFormat.toUpperCase()+'…');
+  await new Promise(r=>setTimeout(r,400));
 
-    async function load() {
-      try {
-        const res = await fetch(`${API_BASE}/logs`);
-        const data = await res.json();
-        allLogs = data.logs || [];
-        const s = data.summary || { ERROR: 0, WARNING: 0, INFO: 0 };
-        const t = data.total || 0;
+  if(selectedFormat==='csv') exportCSV(data);
+  else if(selectedFormat==='json') exportJSON(data);
+  else exportPDF(data);
 
-        document.getElementById('rTotal').textContent    = t.toLocaleString();
-        document.getElementById('rErrors').textContent   = s.ERROR.toLocaleString();
-        document.getElementById('rWarnings').textContent = s.WARNING.toLocaleString();
-        document.getElementById('rInfo').textContent     = s.INFO.toLocaleString();
-        const pct = v => t > 0 ? ((v/t)*100).toFixed(1)+'% of total' : '—';
-        document.getElementById('rErrorPct').textContent = pct(s.ERROR);
-        document.getElementById('rWarnPct').textContent  = pct(s.WARNING);
-        document.getElementById('rInfoPct').textContent  = pct(s.INFO);
+  setProgress(100,'✓ Export complete!');
+  setTimeout(()=>closeExportModal(),1200);
+}
 
-        buildCharts(s);
-        renderTopMessages(allLogs.filter(l => l.type === 'ERROR'));
-      } catch(e) {
-        document.getElementById('rTotal').textContent = '—';
-        document.getElementById('topMsgList').innerHTML = `
-          <div style="display:flex;flex-direction:column;align-items:center;padding:48px 20px;gap:12px">
-            <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,.1);
-              display:flex;align-items:center;justify-content:center">
-              <svg width="26" height="26" fill="none" stroke="#ef4444" stroke-width="1.8" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-            </div>
-            <div style="font-size:14px;font-weight:600;color:var(--accent-red)">Backend Unreachable</div>
-            <div style="font-size:12.5px;color:var(--text-secondary);text-align:center;max-width:280px;line-height:1.6">
-              Start your Node.js server on port 5000, then click Refresh.
-            </div>
-          </div>`;
-      }
-    }
+function exportCSV(data){
+  const logs=data.logs||[];
+  const rows=logs.map(l=>`"${l.timestamp}","${l.type}","${(l.source||'unknown')}","${(l.message||'').replace(/"/g,'""')}"`);
+  const blob=new Blob(['Timestamp,Level,Source,Message\n'+rows.join('\n')],{type:'text/csv'});
+  dl(blob,'logs_'+Date.now()+'.csv');
+}
 
-    function exportCSV() {
-      if (!allLogs.length) return alert('No data loaded yet.');
-      const rows = allLogs.map(l => `"${l.timestamp}","${l.type}","${l.message.replace(/"/g,'""')}"`);
-      const blob = new Blob(['Timestamp,Level,Message\n' + rows.join('\n')], { type: 'text/csv' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-      a.download = `report_${Date.now()}.csv`; a.click();
-    }
+function exportJSON(data){
+  const out={
+    generatedAt:new Date().toISOString(),
+    total:(data.logs||[]).length,
+    logs:document.getElementById('chkLogs').checked?data.logs:[],
+    patterns:document.getElementById('chkPatterns').checked?data.patterns:[],
+    alerts:document.getElementById('chkAlerts').checked?data.alerts:[],
+  };
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  dl(blob,'report_'+Date.now()+'.json');
+}
 
-    function exportJSON() {
-      if (!allLogs.length) return alert('No data loaded yet.');
-      const blob = new Blob([JSON.stringify(allLogs, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-      a.download = `report_${Date.now()}.json`; a.click();
-    }
+function exportPDF(data){
+  const logs=data.logs||[];
+  const summary=logs.reduce((a,l)=>{a[l.type]=(a[l.type]||0)+1;return a},{ERROR:0,WARNING:0,INFO:0});
+  const patterns=data.patterns||[];
+  const alerts=data.alerts||[];
+  const now=new Date().toLocaleString();
 
-    document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
-    document.getElementById('exportJsonBtn').addEventListener('click', exportJSON);
-    document.getElementById('refreshBtn').addEventListener('click', load);
-    load();
-  </script>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <title>LogLytics Report</title>
+  <style>
+    body{font-family:Arial,sans-serif;color:#1a1a2e;padding:40px;max-width:900px;margin:0 auto}
+    h1{color:#4f8ef7;border-bottom:2px solid #4f8ef7;padding-bottom:8px}
+    h2{color:#1a1a2e;margin-top:32px;font-size:16px}
+    .meta{color:#666;font-size:13px;margin-bottom:32px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:20px 0}
+    .stat{background:#f8f9fa;border-radius:8px;padding:16px;text-align:center}
+    .stat-val{font-size:28px;font-weight:700;color:#4f8ef7}
+    .stat-val.red{color:#ef4444}.stat-val.yellow{color:#f59e0b}.stat-val.green{color:#22c55e}
+    .stat-label{font-size:12px;color:#666;margin-top:4px}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px}
+    th{background:#4f8ef7;color:white;padding:8px 12px;text-align:left}
+    td{padding:8px 12px;border-bottom:1px solid #eee}
+    tr:nth-child(even)td{background:#f8f9fa}
+    .footer{margin-top:40px;color:#999;font-size:11px;border-top:1px solid #eee;padding-top:16px}
+  </style></head><body>
+  <h1>📊 LogLytics Report</h1>
+  <div class="meta">Generated: ${now} &nbsp;·&nbsp; Total logs: ${logs.length.toLocaleString()}</div>
+
+  <h2>Summary Statistics</h2>
+  <div class="stats">
+    <div class="stat"><div class="stat-val">${logs.length}</div><div class="stat-label">Total Logs</div></div>
+    <div class="stat"><div class="stat-val red">${summary.ERROR||0}</div><div class="stat-label">Errors</div></div>
+    <div class="stat"><div class="stat-val yellow">${summary.WARNING||0}</div><div class="stat-label">Warnings</div></div>
+    <div class="stat"><div class="stat-val green">${summary.INFO||0}</div><div class="stat-label">Info</div></div>
+  </div>
+
+  <h2>Top Error Patterns</h2>
+  <table><thead><tr><th>#</th><th>Pattern</th><th>Count</th><th>Severity</th></tr></thead>
+  <tbody>${patterns.slice(0,10).map((p,i)=>`<tr><td>${i+1}</td><td>${p.pattern||p.message||''}</td><td>${p.count}</td><td>${p.severity||'ERROR'}</td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:#999">No patterns found</td></tr>'}
+  </tbody></table>
+
+  <h2>Recent Alert History</h2>
+  <table><thead><tr><th>Time</th><th>Rule</th><th>Severity</th></tr></thead>
+  <tbody>${alerts.slice(0,20).map(a=>`<tr><td>${new Date(a.triggeredAt).toLocaleString()}</td><td>${a.ruleName||''}</td><td>${a.severity||''}</td></tr>`).join('')||'<tr><td colspan="3" style="text-align:center;color:#999">No alert history</td></tr>'}
+  </tbody></table>
+
+  <h2>Recent Log Entries</h2>
+  <table><thead><tr><th>Timestamp</th><th>Level</th><th>Source</th><th>Message</th></tr></thead>
+  <tbody>${logs.slice(0,50).map(l=>`<tr><td>${l.timestamp||''}</td><td>${l.type||''}</td><td>${l.source||'unknown'}</td><td>${(l.message||'').slice(0,80)}</td></tr>`).join('')}
+  </tbody></table>
+
+  <div class="footer">LogLytics · DSA-powered Log Analyzer · Generated ${now}</div>
+  </body></html>`;
+
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const w=window.open(url,'_blank');
+  setTimeout(()=>{w?.print();},500);
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+
+function dl(blob,name){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+
+document.getElementById('refreshBtn').onclick=load;
+load();
+</script>
+<script src="theme.js"></script>
 </body>
 </html>

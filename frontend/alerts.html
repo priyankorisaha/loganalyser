@@ -1,352 +1,428 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LogLytics — Alerts</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
   <style>
-    .page-hero { margin-bottom: 20px; }
-    .page-hero h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-    .page-hero p  { font-size: 13px; color: var(--text-secondary); }
+    .page-title{font-size:19px;font-weight:700;margin-bottom:2px}
+    .page-sub{font-size:12.5px;color:var(--text-secondary);margin-bottom:20px}
+    .alerts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+    @media(max-width:800px){.alerts-grid{grid-template-columns:1fr}}
 
-    .alert-summary-cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .a-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 18px;
-    }
-    .a-card-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
-    .a-card-value { font-family: 'Space Mono', monospace; font-size: 28px; font-weight: 700; }
-    .a-card-value.red { color: var(--accent-red); }
-    .a-card-value.yellow { color: var(--accent-yellow); }
-    .a-card-value.blue { color: var(--accent-blue); }
+    /* summary cards */
+    .a-stat{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+    .a-stat-label{font-size:12px;color:var(--text-secondary);margin-bottom:6px}
+    .a-stat-val{font-family:'Space Mono',monospace;font-size:28px;font-weight:700}
+    .a-stat-val.red{color:var(--accent-red)} .a-stat-val.yellow{color:var(--accent-yellow)}
+    .a-stat-val.blue{color:var(--accent-blue)} .a-stat-val.green{color:var(--accent-green)}
 
-    .section-title {
-      font-size: 13px; font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 12px;
-    }
+    /* tabs */
+    .tab-bar{display:flex;gap:4px;margin-bottom:16px;
+      background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:4px;width:fit-content}
+    .tab{padding:7px 18px;border-radius:7px;font-size:13px;font-weight:500;
+      color:var(--text-secondary);cursor:pointer;transition:all .2s}
+    .tab.active{background:var(--accent-blue);color:#fff}
+    .tab-pane{display:none} .tab-pane.active{display:block}
 
-    .alert-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+    /* rule form */
+    .rule-form{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+    .rule-form-title{font-size:13px;font-weight:600;margin-bottom:16px;
+      display:flex;align-items:center;gap:8px}
+    .rule-form-title svg{width:14px;height:14px;color:var(--accent-blue)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+    .form-field{display:flex;flex-direction:column;gap:5px}
+    .form-field label{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim)}
+    .form-field input,.form-field select{
+      padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid var(--border);
+      border-radius:8px;color:var(--text-primary);font-size:12.5px;
+      font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s}
+    .form-field input:focus,.form-field select:focus{border-color:var(--accent-blue)}
+    .form-field select option{background:#0f1520}
+    .form-actions{display:flex;gap:8px;margin-top:4px}
+    .btn-create{padding:8px 20px;background:var(--accent-blue);color:#fff;border:none;
+      border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+      font-family:'DM Sans',sans-serif;transition:opacity .2s}
+    .btn-create:hover{opacity:.85}
+    .btn-eval{padding:8px 16px;background:rgba(34,197,94,.12);color:var(--accent-green);
+      border:1px solid rgba(34,197,94,.25);border-radius:8px;font-size:13px;font-weight:600;
+      cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+    .btn-eval:hover{background:rgba(34,197,94,.2)}
 
-    .alert-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 18px;
-      display: flex; align-items: flex-start; gap: 14px;
-      transition: border-color 0.2s;
-    }
-    .alert-card:hover { border-color: var(--border-bright); }
-    .alert-card.critical { border-left: 3px solid var(--accent-red); }
-    .alert-card.warning  { border-left: 3px solid var(--accent-yellow); }
+    /* rules list */
+    .rules-list{display:flex;flex-direction:column;gap:10px}
+    .rule-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+      padding:14px 18px;display:flex;align-items:center;gap:14px;transition:border-color .2s}
+    .rule-card:hover{border-color:var(--border-bright)}
+    .rule-card.triggered{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.04)}
+    .rule-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
+      justify-content:center;flex-shrink:0}
+    .rule-icon svg{width:16px;height:16px}
+    .ic-high{background:rgba(239,68,68,.12);color:var(--accent-red)}
+    .ic-medium{background:rgba(245,158,11,.12);color:var(--accent-yellow)}
+    .ic-low{background:rgba(79,142,247,.12);color:var(--accent-blue)}
+    .rule-info{flex:1;min-width:0}
+    .rule-name{font-size:13.5px;font-weight:600;color:var(--text-primary);margin-bottom:3px}
+    .rule-desc{font-size:12px;color:var(--text-secondary)}
+    .rule-meta{display:flex;gap:10px;margin-top:4px;flex-wrap:wrap}
+    .rule-tag{font-size:10.5px;font-family:'Space Mono',monospace;padding:2px 7px;border-radius:4px}
+    .tag-err{background:rgba(239,68,68,.1);color:var(--accent-red)}
+    .tag-warn{background:rgba(245,158,11,.1);color:var(--accent-yellow)}
+    .tag-info{background:rgba(34,197,94,.1);color:var(--accent-green)}
+    .tag-blue{background:rgba(79,142,247,.1);color:var(--accent-blue)}
+    .rule-status{flex-shrink:0;display:flex;align-items:center;gap:8px}
+    .status-pill{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+    .pill-ok{background:rgba(34,197,94,.1);color:var(--accent-green);border:1px solid rgba(34,197,94,.2)}
+    .pill-triggered{background:rgba(239,68,68,.1);color:var(--accent-red);border:1px solid rgba(239,68,68,.2)}
+    .pill-disabled{background:rgba(255,255,255,.05);color:var(--text-dim);border:1px solid var(--border)}
+    .btn-del{padding:5px 10px;background:transparent;color:var(--text-dim);
+      border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;
+      font-family:'DM Sans',sans-serif;transition:all .2s}
+    .btn-del:hover{border-color:var(--accent-red);color:var(--accent-red)}
 
-    .alert-icon {
-      width: 36px; height: 36px; border-radius: 9px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .alert-icon.red    { background: rgba(239,68,68,0.12); color: var(--accent-red); }
-    .alert-icon.yellow { background: rgba(245,158,11,0.12); color: var(--accent-yellow); }
-    .alert-icon svg { width: 18px; height: 18px; }
+    /* patterns */
+    .pattern-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+      padding:14px 18px;display:flex;align-items:center;gap:14px;border-left:3px solid var(--accent-red)}
+    .pat-count{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;
+      color:var(--accent-red);flex-shrink:0;min-width:44px;text-align:center}
+    .pat-msg{flex:1;min-width:0}
+    .pat-text{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:3px;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pat-sub{font-size:12px;color:var(--text-secondary)}
 
-    .alert-body { flex: 1; min-width: 0; }
-    .alert-msg {
-      font-size: 13.5px; font-weight: 600; color: var(--text-primary);
-      margin-bottom: 4px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .alert-meta {
-      font-size: 12px; color: var(--text-secondary);
-      display: flex; gap: 14px; flex-wrap: wrap;
-    }
-    .alert-meta span { display: flex; align-items: center; gap: 4px; }
+    /* history */
+    .history-row{display:flex;align-items:center;gap:12px;padding:10px 18px;
+      border-bottom:1px solid rgba(255,255,255,.03);font-size:12.5px}
+    .history-row:last-child{border-bottom:none}
+    .hist-time{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);
+      white-space:nowrap;flex-shrink:0}
+    .hist-rule{flex:1;color:var(--text-primary);font-weight:500}
+    .hist-count{font-family:'Space Mono',monospace;color:var(--accent-red);flex-shrink:0}
 
-    .alert-count {
-      font-family: 'Space Mono', monospace;
-      font-size: 18px; font-weight: 700;
-      color: var(--accent-red);
-      flex-shrink: 0;
-    }
-    .alert-count.yellow { color: var(--accent-yellow); }
+    /* threshold bar */
+    .thresh-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+      padding:14px 18px;display:flex;align-items:center;justify-content:space-between;
+      gap:16px;margin-bottom:16px;flex-wrap:wrap}
+    .thresh-info{font-size:13px;color:var(--text-secondary)}
+    .thresh-info strong{color:var(--text-primary)}
+    .thresh-pill{padding:4px 12px;border-radius:20px;font-size:11.5px;font-weight:700;
+      font-family:'Space Mono',monospace}
+    .thresh-ok{background:rgba(34,197,94,.1);color:var(--accent-green);border:1px solid rgba(34,197,94,.2)}
+    .thresh-bad{background:rgba(239,68,68,.1);color:var(--accent-red);border:1px solid rgba(239,68,68,.2)}
 
-    .threshold-bar {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 18px;
-      margin-bottom: 20px;
-      display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    }
-    .threshold-info { font-size: 13px; color: var(--text-secondary); }
-    .threshold-info strong { color: var(--text-primary); }
-    .threshold-pill {
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px; font-weight: 700;
-      font-family: 'Space Mono', monospace;
-    }
-    .threshold-pill.exceeded { background: rgba(239,68,68,0.12); color: var(--accent-red); border: 1px solid rgba(239,68,68,0.25); }
-    .threshold-pill.ok { background: rgba(34,197,94,0.12); color: var(--accent-green); border: 1px solid rgba(34,197,94,0.25); }
+    .section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+      color:var(--text-dim);margin-bottom:10px}
+    .eval-result{padding:10px 14px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);
+      border-radius:8px;font-size:12.5px;color:var(--accent-green);margin-bottom:12px;display:none}
+    .eval-result.show{display:block}
 
-    .empty-state {
-      text-align: center; padding: 60px 20px;
-      color: var(--text-dim); font-size: 14px;
-    }
-    .empty-state svg { width: 40px; height: 40px; margin-bottom: 12px; display: block; margin-inline: auto; opacity: 0.3; }
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.1);
+      border-top-color:var(--accent-blue);border-radius:50%;
+      animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
-    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 8px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .reload-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 7px 16px;
-      background: rgba(79,142,247,0.1);
-      border: 1px solid rgba(79,142,247,0.25);
-      border-radius: 8px;
-      color: var(--accent-blue);
-      font-size: 12.5px; font-weight: 600;
-      cursor: pointer; font-family: 'DM Sans', sans-serif;
-      transition: all 0.2s;
-    }
-    .reload-btn:hover { background: rgba(79,142,247,0.2); }
-    .reload-btn svg { width: 13px; height: 13px; }
+    .empty-card{display:flex;flex-direction:column;align-items:center;padding:48px 20px;gap:12px;
+      background:var(--bg-card);border:1px solid var(--border);border-radius:12px}
+    .empty-card svg{width:32px;height:32px;opacity:.3}
+    .empty-card-title{font-size:14px;font-weight:600;color:var(--text-secondary)}
+    .empty-card-sub{font-size:12.5px;color:var(--text-dim);text-align:center;max-width:280px;line-height:1.6}
   </style>
 </head>
 <body>
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg>
+
+<aside class="sidebar">
+  <div class="sidebar-logo"><svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg></div>
+  <nav class="sidebar-nav">
+    <div class="nav-icon" title="Dashboard" onclick="location.href='index.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+    <div class="nav-icon" title="Explore" onclick="location.href='explore.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
+    <div class="nav-icon active" title="Alerts"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+    <div class="nav-icon" title="Reports" onclick="location.href='reports.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="nav-icon" title="Settings" onclick="location.href='settings.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l-.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+  </div>
+</aside>
+
+<header class="topbar">
+  <div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg></div>LogLytics</div>
+  <nav class="topbar-nav">
+    <a href="index.html">Dashboard</a><a href="explore.html">Explore</a>
+    <a href="alerts.html" class="active">Alerts</a>
+    <a href="reports.html">Reports</a><a href="settings.html">Settings</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="theme-toggle" id="themeToggle" title="Toggle theme">
+      <svg class="icon-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
     </div>
-    <nav class="sidebar-nav">
-      <div class="nav-icon" title="Dashboard" onclick="location.href='index.html'">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      </div>
-      <div class="nav-icon" title="Explore" onclick="location.href='explore.html'">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      </div>
-      <div class="nav-icon active" title="Alerts">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      </div>
-      <div class="nav-icon" title="Reports" onclick="location.href='reports.html'">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      </div>
-    </nav>
-    <div class="sidebar-bottom">
-      <div class="nav-icon" title="Settings" onclick="location.href='settings.html'">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </div>
+    <div class="notif-btn"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-dot" id="notifDot"></span></div>
+    <div class="user-chip"><div class="avatar">PS</div><div class="user-info"><div class="user-name">Priyankori Saha</div><div class="user-role">Admin</div></div></div>
+  </div>
+</header>
+
+<main class="main">
+  <div class="content">
+    <div class="page-title">Alerts &amp; Rules</div>
+    <div class="page-sub">Create alert rules, detect error patterns, and view trigger history. Powered by Sliding Window algorithm.</div>
+
+    <!-- SUMMARY -->
+    <div class="alerts-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="a-stat"><div class="a-stat-label">Total Errors</div><div class="a-stat-val red" id="statErrors">—</div></div>
+      <div class="a-stat"><div class="a-stat-label">Warnings</div><div class="a-stat-val yellow" id="statWarnings">—</div></div>
+      <div class="a-stat"><div class="a-stat-label">Active Rules</div><div class="a-stat-val blue" id="statRules">—</div></div>
+      <div class="a-stat"><div class="a-stat-label">Triggered Today</div><div class="a-stat-val red" id="statTriggered">—</div></div>
     </div>
-  </aside>
 
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg></div>
-      LogLytics
+    <!-- THRESHOLD -->
+    <div class="thresh-bar">
+      <div class="thresh-info">Alert threshold: <strong id="threshVal">10</strong> errors —
+        <span id="threshStatus">checking…</span></div>
+      <span class="thresh-pill" id="threshPill">—</span>
     </div>
-    <nav class="topbar-nav">
-      <a href="index.html">Dashboard</a>
-      <a href="explore.html">Explore</a>
-      <a href="alerts.html" class="active">Alerts</a>
-      <a href="reports.html">Reports</a>
-      <a href="settings.html">Settings</a>
-    </nav>
-    <div class="topbar-right">
-      <div class="notif-btn">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span class="notif-dot"></span>
-      </div>
-      <div class="user-chip">
-        <div class="avatar">PS</div>
-        <div class="user-info"><div class="user-name">Priyankori Saha</div><div class="user-role">Admin</div></div>
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:12px;height:12px;color:var(--text-dim)"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
+
+    <!-- TABS -->
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchTab('rules')">Alert Rules</div>
+      <div class="tab" onclick="switchTab('patterns')">Error Patterns</div>
+      <div class="tab" onclick="switchTab('history')">Trigger History</div>
     </div>
-  </header>
 
-  <main class="main">
-    <div class="content">
-      <div class="page-hero" style="display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <h2>Alerts</h2>
-          <p>Error patterns and threshold violations detected from your log data.</p>
+    <!-- TAB: RULES -->
+    <div class="tab-pane active" id="tab-rules">
+      <!-- Create rule form -->
+      <div class="rule-form">
+        <div class="rule-form-title">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Create New Alert Rule
         </div>
-        <button class="reload-btn" id="reloadBtn">
-          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          Refresh
-        </button>
+        <div class="form-row">
+          <div class="form-field"><label>Rule Name</label><input type="text" id="rName" placeholder="e.g. High Error Rate"/></div>
+          <div class="form-field"><label>Log Level (optional)</label>
+            <select id="rType"><option value="">Any</option><option value="ERROR">ERROR</option><option value="WARNING">WARNING</option><option value="INFO">INFO</option></select></div>
+          <div class="form-field"><label>Message Contains</label><input type="text" id="rSearch" placeholder="e.g. timeout"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field"><label>Threshold (count)</label><input type="number" id="rThreshold" value="10" min="1"/></div>
+          <div class="form-field"><label>Window (seconds)</label><input type="number" id="rWindow" value="60" min="1"/></div>
+          <div class="form-field"><label>Severity</label>
+            <select id="rSeverity"><option value="critical">Critical</option><option value="high" selected>High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-create" onclick="createRule()">+ Create Rule</button>
+          <button class="btn-eval" onclick="evaluateRules()">▶ Evaluate All Rules Now</button>
+        </div>
+        <div class="eval-result" id="evalResult"></div>
       </div>
 
-      <!-- Summary cards -->
-      <div class="alert-summary-cards">
-        <div class="a-card">
-          <div class="a-card-label">Total Errors</div>
-          <div class="a-card-value red" id="totalErrors">—</div>
-        </div>
-        <div class="a-card">
-          <div class="a-card-label">Total Warnings</div>
-          <div class="a-card-value yellow" id="totalWarnings">—</div>
-        </div>
-        <div class="a-card">
-          <div class="a-card-label">Unique Error Patterns</div>
-          <div class="a-card-value blue" id="uniquePatterns">—</div>
-        </div>
-      </div>
-
-      <!-- Threshold status -->
-      <div class="threshold-bar" id="thresholdBar">
-        <div class="threshold-info">
-          Alert threshold: <strong id="thresholdVal">10</strong> errors —
-          <span id="thresholdStatus">checking…</span>
-        </div>
-        <span class="threshold-pill" id="thresholdPill">—</span>
-      </div>
-
-      <!-- Error patterns (repeated) -->
-      <div class="section-title">🔴 Critical — Repeated Error Patterns</div>
-      <div class="alert-cards" id="criticalCards">
-        <div style="text-align:center;padding:30px;color:var(--text-dim)"><span class="spinner"></span>Loading…</div>
-      </div>
-
-      <!-- All errors -->
-      <div class="section-title">⚠️ All Error &amp; Warning Log Entries</div>
-      <div class="panel log-panel">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Timestamp</th><th>Level</th><th>Message</th></tr>
-            </thead>
-            <tbody id="alertTableBody">
-              <tr><td colspan="3" style="text-align:center;padding:30px;color:var(--text-dim)"><span class="spinner"></span>Loading…</td></tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="section-label">Active Rules</div>
+      <div class="rules-list" id="rulesList">
+        <div style="text-align:center;padding:30px;color:var(--text-dim)"><span class="spinner"></span>Loading rules…</div>
       </div>
     </div>
-  </main>
 
-  <script>
-    const API_BASE = 'http://localhost:5000/api';
-    const THRESHOLD = parseInt(localStorage.getItem('ll_threshold') || '10');
+    <!-- TAB: PATTERNS -->
+    <div class="tab-pane" id="tab-patterns">
+      <div class="section-label" style="margin-bottom:14px">Recurring Error Patterns — detected via HashMap frequency analysis</div>
+      <div id="patternsList">
+        <div style="text-align:center;padding:30px;color:var(--text-dim)"><span class="spinner"></span>Analyzing patterns…</div>
+      </div>
+    </div>
 
-    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function levelBadge(type) {
-      const cls = type === 'ERROR' ? 'level-error' : type === 'WARNING' ? 'level-warning' : 'level-info';
-      return `<span class="level-badge ${cls}"><span class="dot"></span>${type}</span>`;
+    <!-- TAB: HISTORY -->
+    <div class="tab-pane" id="tab-history">
+      <div class="section-label" style="margin-bottom:14px">Alert Trigger History</div>
+      <div class="panel log-panel" id="historyPanel">
+        <div style="text-align:center;padding:30px;color:var(--text-dim)"><span class="spinner"></span>Loading history…</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const API='http://localhost:5000/api';
+const THRESHOLD=parseInt(localStorage.getItem('ll_threshold')||'10');
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function sev(s){return s==='high'||s==='critical'?'ic-high':s==='medium'?'ic-medium':'ic-low'}
+function sevIcon(s){
+  return`<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+  </svg>`;
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['rules','patterns','history'][i]===name));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='patterns')loadPatterns();
+  if(name==='history')loadHistory();
+}
+
+async function loadSummary(){
+  document.getElementById('threshVal').textContent=THRESHOLD;
+  try{
+    const [lr,la]=await Promise.all([fetch(`${API}/logs?type=ERROR`),fetch(`${API}/logs?type=WARNING`)]);
+    const ed=await lr.json(),wd=await la.json();
+    const ec=ed.logs?.length||0,wc=wd.logs?.length||0;
+    document.getElementById('statErrors').textContent=ec.toLocaleString();
+    document.getElementById('statWarnings').textContent=wc.toLocaleString();
+    const exceeded=ec>THRESHOLD;
+    document.getElementById('threshStatus').textContent=exceeded?`EXCEEDED (${ec} errors)`:`OK (${ec} errors)`;
+    const pill=document.getElementById('threshPill');
+    pill.textContent=exceeded?'THRESHOLD EXCEEDED':'WITHIN THRESHOLD';
+    pill.className='thresh-pill '+(exceeded?'thresh-bad':'thresh-ok');
+    if(exceeded)document.getElementById('notifDot').style.background='var(--accent-red)';
+  }catch(e){}
+}
+
+async function loadRules(){
+  try{
+    const r=await fetch(`${API}/alert-rules`);
+    const d=await r.json();
+    const rules=d.rules||[];
+    document.getElementById('statRules').textContent=rules.filter(r=>r.enabled).length;
+    const el=document.getElementById('rulesList');
+    if(!rules.length){
+      el.innerHTML=`<div class="empty-card">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        <div class="empty-card-title">No alert rules yet</div>
+        <div class="empty-card-sub">Create your first rule above to start monitoring your logs automatically.</div>
+      </div>`;
+      return;
     }
+    el.innerHTML=rules.map(r=>`
+      <div class="rule-card" id="rc-${r._id}">
+        <div class="rule-icon ${sev(r.severity)}">${sevIcon(r.severity)}</div>
+        <div class="rule-info">
+          <div class="rule-name">${esc(r.name)}</div>
+          <div class="rule-desc">Triggers when ${r.condition.type||'any'} count ≥ ${r.condition.threshold} in ${r.windowSeconds}s window${r.condition.search?' containing "'+esc(r.condition.search)+'"':''}</div>
+          <div class="rule-meta">
+            ${r.condition.type?`<span class="rule-tag ${r.condition.type==='ERROR'?'tag-err':r.condition.type==='WARNING'?'tag-warn':'tag-info'}">${r.condition.type}</span>`:''}
+            <span class="rule-tag tag-blue">threshold: ${r.condition.threshold}</span>
+            <span class="rule-tag tag-blue">window: ${r.windowSeconds}s</span>
+            <span class="rule-tag tag-blue">${r.severity}</span>
+          </div>
+        </div>
+        <div class="rule-status">
+          <span class="status-pill ${r.enabled?'pill-ok':'pill-disabled'}">${r.enabled?'ACTIVE':'DISABLED'}</span>
+          <button class="btn-del" onclick="deleteRule('${r._id}')">Delete</button>
+        </div>
+      </div>`).join('');
+  }catch(e){
+    document.getElementById('rulesList').innerHTML=`<div class="empty-card">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div class="empty-card-title">Backend unreachable</div>
+      <div class="empty-card-sub">Start your Node.js server on port 5000 to manage alert rules.</div>
+    </div>`;
+  }
+}
 
-    async function load() {
-      document.getElementById('thresholdVal').textContent = THRESHOLD;
-      try {
-        // Fetch errors + warnings
-        const [errRes, warnRes, allRes] = await Promise.all([
-          fetch(`${API_BASE}/logs?type=ERROR`),
-          fetch(`${API_BASE}/logs?type=WARNING`),
-          fetch(`${API_BASE}/logs`)
-        ]);
-        const errData  = await errRes.json();
-        const warnData = await warnRes.json();
-        const allData  = await allRes.json();
+async function createRule(){
+  const name=document.getElementById('rName').value.trim();
+  const type=document.getElementById('rType').value;
+  const search=document.getElementById('rSearch').value.trim();
+  const threshold=parseInt(document.getElementById('rThreshold').value)||10;
+  const windowSeconds=parseInt(document.getElementById('rWindow').value)||60;
+  const severity=document.getElementById('rSeverity').value;
+  if(!name){alert('Rule name is required');return;}
+  try{
+    await fetch(`${API}/alert-rules`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,condition:{type,threshold,search},windowSeconds,severity})});
+    document.getElementById('rName').value='';
+    document.getElementById('rSearch').value='';
+    loadRules();
+  }catch(e){alert('Failed to create rule — is your backend running?')}
+}
 
-        const errors   = errData.logs  || [];
-        const warnings = warnData.logs || [];
-        const total    = allData.total || 0;
+async function deleteRule(id){
+  try{
+    await fetch(`${API}/alert-rules/${id}`,{method:'DELETE'});
+    loadRules();
+  }catch(e){}
+}
 
-        // Update summary
-        document.getElementById('totalErrors').textContent   = errors.length.toLocaleString();
-        document.getElementById('totalWarnings').textContent = warnings.length.toLocaleString();
+async function evaluateRules(){
+  const el=document.getElementById('evalResult');
+  el.textContent='Evaluating…';el.classList.add('show');
+  try{
+    const r=await fetch(`${API}/rules/evaluate`,{method:'POST'});
+    const d=await r.json();
+    document.getElementById('statTriggered').textContent=d.triggered||0;
+    el.innerHTML=`✓ Evaluated ${d.evaluated||0} rules — <strong>${d.triggered||0} triggered</strong>. ${
+      d.results?.map(r=>`${r.rule}: ${r.count}/${r.threshold}`).join(' · ')||''}`;
+    // Mark triggered rule cards
+    d.results?.filter(r=>r.triggered).forEach(r=>{
+      // highlight by name since we don't have id in result
+    });
+    loadHistory();
+  }catch(e){
+    el.style.background='rgba(239,68,68,.06)';el.style.borderColor='rgba(239,68,68,.2)';
+    el.style.color='var(--accent-red)';el.textContent='Backend unreachable — start server on port 5000';
+  }
+}
 
-        // Threshold check
-        const exceeded = errors.length > THRESHOLD;
-        document.getElementById('thresholdStatus').textContent =
-          exceeded ? `EXCEEDED (${errors.length} errors found)` : `OK (${errors.length} errors found)`;
-        const pill = document.getElementById('thresholdPill');
-        pill.textContent = exceeded ? 'THRESHOLD EXCEEDED' : 'WITHIN THRESHOLD';
-        pill.className = 'threshold-pill ' + (exceeded ? 'exceeded' : 'ok');
-
-        // Group repeated error patterns
-        const patternMap = {};
-        errors.forEach(l => {
-          const key = l.message.trim();
-          if (!patternMap[key]) patternMap[key] = { message: key, count: 0, last: l.timestamp };
-          patternMap[key].count++;
-          if (l.timestamp > patternMap[key].last) patternMap[key].last = l.timestamp;
-        });
-        const patterns = Object.values(patternMap).sort((a,b) => b.count - a.count);
-        document.getElementById('uniquePatterns').textContent = patterns.length;
-
-        const critDiv = document.getElementById('criticalCards');
-        const repeated = patterns.filter(p => p.count > 1);
-        if (repeated.length === 0) {
-          critDiv.innerHTML = `
-            <div style="display:flex;flex-direction:column;align-items:center;padding:48px 20px;gap:12px;
-              background:var(--bg-card);border:1px solid var(--border);border-radius:12px">
-              <div style="width:56px;height:56px;border-radius:50%;background:rgba(34,197,94,.1);
-                display:flex;align-items:center;justify-content:center">
-                <svg width="26" height="26" fill="none" stroke="#22c55e" stroke-width="1.8" viewBox="0 0 24 24">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-              </div>
-              <div style="font-size:14px;font-weight:600;color:var(--accent-green)">All Clear</div>
-              <div style="font-size:12.5px;color:var(--text-secondary);text-align:center;max-width:280px;line-height:1.6">
-                No repeated error patterns detected. Your system looks healthy!
-              </div>
-            </div>`;
-        } else {
-          critDiv.innerHTML = repeated.map(p => `
-            <div class="alert-card critical">
-              <div class="alert-icon red">
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              </div>
-              <div class="alert-body">
-                <div class="alert-msg">${esc(p.message)}</div>
-                <div class="alert-meta">
-                  <span>Last seen: ${esc(p.last)}</span>
-                  <span>Type: ERROR</span>
-                </div>
-              </div>
-              <div class="alert-count">×${p.count}</div>
-            </div>`).join('');
-        }
-
-        // All errors + warnings table
-        const combined = [...errors, ...warnings].sort((a,b) => b.timestamp.localeCompare(a.timestamp));
-        const tbody = document.getElementById('alertTableBody');
-        tbody.innerHTML = combined.length ? combined.map(l => `<tr>
-          <td class="ts">${esc(l.timestamp)}</td>
-          <td>${levelBadge(l.type)}</td>
-          <td class="msg" title="${esc(l.message)}">${esc(l.message)}</td>
-        </tr>`).join('') : `<tr><td colspan="3" style="text-align:center;padding:32px;color:var(--text-dim)">No errors or warnings found</td></tr>`;
-
-      } catch(e) {
-        document.getElementById('criticalCards').innerHTML = `
-          <div style="display:flex;flex-direction:column;align-items:center;padding:48px 20px;gap:12px;
-            background:var(--bg-card);border:1px solid rgba(239,68,68,.2);border-radius:12px">
-            <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,.1);
-              display:flex;align-items:center;justify-content:center">
-              <svg width="26" height="26" fill="none" stroke="#ef4444" stroke-width="1.8" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-            </div>
-            <div style="font-size:14px;font-weight:600;color:var(--accent-red)">Backend Unreachable</div>
-            <div style="font-size:12.5px;color:var(--text-secondary);text-align:center;max-width:280px;line-height:1.6">
-              Start your Node.js server on port 5000, then click Refresh.
-            </div>
-          </div>`;
-      }
+async function loadPatterns(){
+  const el=document.getElementById('patternsList');
+  try{
+    const r=await fetch(`${API}/patterns`);
+    const d=await r.json();
+    const patterns=d.patterns||[];
+    if(!patterns.length){
+      el.innerHTML=`<div class="empty-card">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div class="empty-card-title" style="color:var(--accent-green)">No repeated patterns</div>
+        <div class="empty-card-sub">No recurring error messages detected. Your logs look clean!</div>
+      </div>`;
+      return;
     }
+    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px">`+
+      patterns.map(p=>`
+        <div class="pattern-card">
+          <div class="pat-count">×${p.count}</div>
+          <div class="pat-msg">
+            <div class="pat-text">${esc(p.message)}</div>
+            <div class="pat-sub">Last seen: ${esc(p.timestamps?.[0]||'—')} · Type: ${esc(p.type)}</div>
+          </div>
+        </div>`).join('')+`</div>`;
+  }catch(e){
+    el.innerHTML=`<div class="empty-card">
+      <div class="empty-card-title" style="color:var(--accent-red)">Backend unreachable</div>
+      <div class="empty-card-sub">Start your Node.js server to detect error patterns.</div>
+    </div>`;
+  }
+}
 
-    document.getElementById('reloadBtn').addEventListener('click', load);
-    load();
-  </script>
+async function loadHistory(){
+  const el=document.getElementById('historyPanel');
+  try{
+    const r=await fetch(`${API}/alerts/history`);
+    const d=await r.json();
+    const history=d.alerts||[];
+    document.getElementById('statTriggered').textContent=history.length;
+    if(!history.length){
+      el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;padding:48px 20px;gap:12px">
+        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:.3"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <div style="font-size:14px;font-weight:600;color:var(--text-secondary)">No trigger history yet</div>
+        <div style="font-size:12.5px;color:var(--text-dim);text-align:center;max-width:280px;line-height:1.6">Create rules and click "Evaluate All Rules Now" to generate history.</div>
+      </div>`;
+      return;
+    }
+    el.innerHTML=history.map(h=>`
+      <div class="history-row">
+        <span class="hist-time">${new Date(h.triggeredAt).toLocaleString()}</span>
+        <span class="hist-rule">${esc(h.ruleName)}</span>
+        <span class="level-badge level-error"><span class="dot"></span>${esc(h.severity||'high').toUpperCase()}</span>
+        <span class="hist-count">${h.count} hits</span>
+      </div>`).join('');
+  }catch(e){
+    el.innerHTML=`<div style="padding:24px;text-align:center;color:var(--accent-red)">Backend unreachable</div>`;
+  }
+}
+
+loadSummary();loadRules();
+</script>
+<script src="theme.js"></script>
 </body>
 </html>
