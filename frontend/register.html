@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LogLytics — Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script>if(localStorage.getItem('ll_theme')==='light')document.documentElement.classList.add('light')</script>
+  <style>
+    :root{
+      --bg-deep:#080c14;--bg-card:rgba(255,255,255,0.05);
+      --border:rgba(255,255,255,0.08);--border-bright:rgba(255,255,255,0.14);
+      --text-primary:#e8edf5;--text-secondary:#7a8aa0;--text-dim:#4a5568;
+      --accent-blue:#4f8ef7;--accent-green:#22c55e;--accent-red:#ef4444;
+      --accent-yellow:#f59e0b;
+    }
+    html.light{
+      --bg-deep:#f0f4fb;--bg-card:rgba(255,255,255,0.9);
+      --border:rgba(0,0,0,0.08);--border-bright:rgba(0,0,0,0.15);
+      --text-primary:#0f1520;--text-secondary:#4a5568;--text-dim:#9aa5b4;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg-deep);color:var(--text-primary);
+      min-height:100vh;display:flex;align-items:center;justify-content:center;
+      transition:background .25s}
+    body::before{content:'';position:fixed;width:500px;height:500px;top:-100px;left:-100px;
+      border-radius:50%;filter:blur(120px);pointer-events:none;
+      background:radial-gradient(circle,rgba(79,142,247,.08) 0%,transparent 70%)}
+    body::after{content:'';position:fixed;width:400px;height:400px;bottom:-80px;right:100px;
+      border-radius:50%;filter:blur(120px);pointer-events:none;
+      background:radial-gradient(circle,rgba(0,212,212,.06) 0%,transparent 70%)}
+
+    .auth-wrap{width:100%;max-width:440px;padding:20px;position:relative;z-index:1}
+    .auth-logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:28px}
+    .auth-logo-icon{width:40px;height:40px;background:linear-gradient(135deg,#4f8ef7,#00d4d4);
+      border-radius:11px;display:flex;align-items:center;justify-content:center;
+      box-shadow:0 0 24px rgba(79,142,247,.35)}
+    .auth-logo-icon svg{width:22px;height:22px;fill:white}
+    .auth-logo-name{font-family:'Space Mono',monospace;font-size:20px;font-weight:700}
+
+    .auth-card{background:var(--bg-card);border:1px solid var(--border);
+      border-radius:16px;padding:32px;backdrop-filter:blur(20px);
+      box-shadow:0 24px 64px rgba(0,0,0,.3)}
+    html.light .auth-card{box-shadow:0 8px 40px rgba(0,0,0,.1)}
+
+    .auth-title{font-size:20px;font-weight:700;margin-bottom:4px}
+    .auth-sub{font-size:13px;color:var(--text-secondary);margin-bottom:24px}
+
+    .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+    .field label{font-size:11.5px;font-weight:600;color:var(--text-secondary);
+      text-transform:uppercase;letter-spacing:.7px}
+    .input-wrap{position:relative}
+    .input-wrap svg.fi{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+      width:16px;height:16px;color:var(--text-dim);pointer-events:none}
+    .field input{width:100%;padding:11px 12px 11px 38px;
+      background:rgba(255,255,255,.04);border:1px solid var(--border);
+      border-radius:10px;color:var(--text-primary);font-size:13.5px;
+      font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s}
+    html.light .field input{background:rgba(0,0,0,.03)}
+    .field input:focus{border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(79,142,247,.12)}
+    .field input.valid{border-color:var(--accent-green)}
+    .field input.invalid{border-color:var(--accent-red)}
+    .field input::placeholder{color:var(--text-dim)}
+
+    .eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+      background:none;border:none;cursor:pointer;color:var(--text-dim);padding:2px}
+    .eye-btn:hover{color:var(--text-secondary)}
+    .eye-btn svg{width:16px;height:16px}
+
+    .field-error{font-size:11.5px;color:var(--accent-red);display:none}
+    .field-error.show{display:block}
+    .field-hint{font-size:11px;color:var(--text-dim)}
+
+    /* password strength */
+    .strength-wrap{margin-top:6px}
+    .strength-bars{display:flex;gap:4px}
+    .strength-seg{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.08);
+      transition:background .3s}
+    .strength-label{font-size:10.5px;color:var(--text-dim);margin-top:4px}
+
+    /* requirements */
+    .req-list{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+    .req{font-size:11.5px;color:var(--text-dim);display:flex;align-items:center;gap:5px}
+    .req.met{color:var(--accent-green)}
+    .req svg{width:12px;height:12px;flex-shrink:0}
+
+    .alert-box{padding:11px 14px;border-radius:9px;font-size:13px;
+      margin-bottom:16px;display:none;align-items:center;gap:8px}
+    .alert-box.show{display:flex}
+    .alert-box.error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--accent-red)}
+    .alert-box.success{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:var(--accent-green)}
+    .alert-box svg{width:14px;height:14px;flex-shrink:0}
+
+    .btn-submit{width:100%;padding:12px;background:var(--accent-blue);color:white;
+      border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;
+      font-family:'DM Sans',sans-serif;transition:opacity .2s,transform .1s;
+      margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px}
+    .btn-submit:hover{opacity:.88}
+    .btn-submit:active{transform:scale(.99)}
+    .btn-submit:disabled{opacity:.5;cursor:not-allowed}
+
+    .auth-footer{text-align:center;margin-top:18px;font-size:13px;color:var(--text-secondary)}
+    .auth-footer a{color:var(--accent-blue);text-decoration:none;font-weight:600}
+    .auth-footer a:hover{text-decoration:underline}
+
+    .theme-btn{position:fixed;top:20px;right:20px;width:38px;height:38px;
+      display:flex;align-items:center;justify-content:center;
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:10px;cursor:pointer;color:var(--text-secondary);transition:all .2s;z-index:10}
+    .theme-btn:hover{border-color:var(--border-bright);color:var(--text-primary)}
+    .theme-btn svg{width:16px;height:16px}
+    .icon-sun{display:none}.icon-moon{display:block}
+    html.light .icon-sun{display:block} html.light .icon-moon{display:none}
+
+    .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
+      border-top-color:white;border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* divider */
+    .divider{display:flex;align-items:center;gap:10px;margin:16px 0}
+    .divider-line{flex:1;height:1px;background:var(--border)}
+    .divider-text{font-size:11.5px;color:var(--text-dim)}
+  </style>
+</head>
+<body>
+
+<div class="theme-btn" id="themeToggle">
+  <svg class="icon-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun"  fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</div>
+
+<div class="auth-wrap">
+  <div class="auth-logo">
+    <div class="auth-logo-icon"><svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg></div>
+    <span class="auth-logo-name">LogLytics</span>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-title">Create account</div>
+    <div class="auth-sub">Start analyzing your logs with a personal workspace</div>
+
+    <div class="alert-box" id="alertBox">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="alertMsg"></span>
+    </div>
+
+    <div class="field">
+      <label>Username</label>
+      <div class="input-wrap">
+        <svg class="fi" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <input type="text" id="username" placeholder="Choose a username" autocomplete="username" oninput="validateUsername()"/>
+      </div>
+      <div class="field-error" id="errUsername"></div>
+      <div class="field-hint">3–20 characters, letters and numbers only</div>
+    </div>
+
+    <div class="field">
+      <label>Email</label>
+      <div class="input-wrap">
+        <svg class="fi" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" oninput="validateEmail()"/>
+      </div>
+      <div class="field-error" id="errEmail"></div>
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <div class="input-wrap">
+        <svg class="fi" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="password" placeholder="Create a strong password" autocomplete="new-password" oninput="checkStrength()"/>
+        <button class="eye-btn" type="button" onclick="togglePwd('password',this)">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <div class="field-error" id="errPassword"></div>
+      <div class="strength-wrap" id="strengthWrap" style="display:none">
+        <div class="strength-bars">
+          <div class="strength-seg" id="s1"></div>
+          <div class="strength-seg" id="s2"></div>
+          <div class="strength-seg" id="s3"></div>
+          <div class="strength-seg" id="s4"></div>
+        </div>
+        <div class="strength-label" id="strengthLabel"></div>
+        <div class="req-list">
+          <div class="req" id="req-len"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>At least 6 characters</div>
+          <div class="req" id="req-upper"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>One uppercase letter</div>
+          <div class="req" id="req-num"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>One number</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Confirm Password</label>
+      <div class="input-wrap">
+        <svg class="fi" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="confirm" placeholder="Repeat your password" autocomplete="new-password" oninput="validateConfirm()"/>
+        <button class="eye-btn" type="button" onclick="togglePwd('confirm',this)">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <div class="field-error" id="errConfirm"></div>
+    </div>
+
+    <button class="btn-submit" id="regBtn" onclick="doRegister()">Create Account</button>
+
+    <div class="auth-footer">
+      Already have an account? <a href="login.html">Sign in</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const API='http://localhost:5000/api';
+
+if(localStorage.getItem('ll_token')){
+  try{const u=JSON.parse(localStorage.getItem('ll_user')||'{}');if(u.id)location.replace('index.html');}catch(_){}
+}
+
+function togglePwd(id){
+  const inp=document.getElementById(id);
+  inp.type=inp.type==='password'?'text':'password';
+}
+
+function showAlert(msg,type='error'){
+  const box=document.getElementById('alertBox');
+  document.getElementById('alertMsg').textContent=msg;
+  box.className='alert-box show '+type;
+}
+function hideAlert(){document.getElementById('alertBox').className='alert-box'}
+
+function setErr(id,msg){
+  const el=document.getElementById(id);
+  el.textContent=msg;el.className=msg?'field-error show':'field-error';
+}
+function setValid(inputId,ok){
+  const inp=document.getElementById(inputId);
+  inp.className=ok?'valid':inp.value?'invalid':'';
+}
+
+function validateUsername(){
+  const v=document.getElementById('username').value.trim();
+  if(!v){setErr('errUsername','');setValid('username',false);return false;}
+  if(v.length<3){setErr('errUsername','At least 3 characters');setValid('username',false);return false;}
+  if(!/^[a-zA-Z0-9_]+$/.test(v)){setErr('errUsername','Letters, numbers and _ only');setValid('username',false);return false;}
+  setErr('errUsername','');setValid('username',true);return true;
+}
+
+function validateEmail(){
+  const v=document.getElementById('email').value.trim();
+  if(!v){setErr('errEmail','');setValid('email',false);return false;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){setErr('errEmail','Enter a valid email');setValid('email',false);return false;}
+  setErr('errEmail','');setValid('email',true);return true;
+}
+
+function checkStrength(){
+  const p=document.getElementById('password').value;
+  document.getElementById('strengthWrap').style.display=p?'block':'none';
+  let score=0;
+  const hasLen=p.length>=6,hasUpper=/[A-Z]/.test(p),hasNum=/[0-9]/.test(p),hasSpec=/[^a-zA-Z0-9]/.test(p);
+  if(hasLen)score++;if(hasUpper)score++;if(hasNum)score++;if(hasSpec)score++;
+  const colors=['#ef4444','#f59e0b','#4f8ef7','#22c55e'];
+  const labels=['Weak','Fair','Good','Strong'];
+  for(let i=1;i<=4;i++){
+    document.getElementById('s'+i).style.background=i<=score?colors[score-1]:'rgba(255,255,255,.08)';
+  }
+  document.getElementById('strengthLabel').textContent=score?labels[score-1]:'';
+  document.getElementById('strengthLabel').style.color=score?colors[score-1]:'var(--text-dim)';
+  // requirements
+  document.getElementById('req-len').className='req'+(hasLen?' met':'');
+  document.getElementById('req-upper').className='req'+(hasUpper?' met':'');
+  document.getElementById('req-num').className='req'+(hasNum?' met':'');
+  return score>=2;
+}
+
+function validateConfirm(){
+  const p=document.getElementById('password').value;
+  const c=document.getElementById('confirm').value;
+  if(!c){setErr('errConfirm','');return false;}
+  if(p!==c){setErr('errConfirm','Passwords do not match');setValid('confirm',false);return false;}
+  setErr('errConfirm','');setValid('confirm',true);return true;
+}
+
+function setLoading(on){
+  const btn=document.getElementById('regBtn');
+  btn.disabled=on;
+  btn.innerHTML=on?'<span class="spinner"></span>Creating account…':'Create Account';
+}
+
+async function doRegister(){
+  hideAlert();
+  const u=validateUsername(),e=validateEmail(),s=checkStrength(),c=validateConfirm();
+  const password=document.getElementById('password').value;
+  if(!u||!e||!password||!c)return;
+  if(password.length<6){setErr('errPassword','Minimum 6 characters');return;}
+  setErr('errPassword','');
+
+  setLoading(true);
+  try{
+    const r=await fetch(`${API}/auth/register`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        username:document.getElementById('username').value.trim(),
+        email:document.getElementById('email').value.trim(),
+        password
+      })
+    });
+    const d=await r.json();
+    if(!r.ok){showAlert(d.error||'Registration failed');return;}
+
+    localStorage.setItem('ll_token',d.token);
+    localStorage.setItem('ll_user',JSON.stringify(d.user));
+    showAlert('Account created! Redirecting…','success');
+    setTimeout(()=>location.replace('index.html'),900);
+  }catch(e){
+    showAlert('Cannot reach backend — make sure your server is running on port 5000');
+  }finally{
+    setLoading(false);
+  }
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
+
+document.getElementById('themeToggle').onclick=()=>{
+  const light=document.documentElement.classList.toggle('light');
+  document.body.classList.toggle('light',light);
+  localStorage.setItem('ll_theme',light?'light':'dark');
+};
+if(localStorage.getItem('ll_theme')==='light')document.body.classList.add('light');
+</script>
+</body>
+</html>

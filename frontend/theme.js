@@ -1,20 +1,76 @@
 /* ============================================================
    theme.js  —  shared across all pages
    1. Dark / Light mode toggle  (persisted in localStorage)
-   2. Trie-based autocomplete on any input#searchInput
+   2. Auth guard — redirect to login if no token
+   3. Attach JWT to all fetch calls automatically
+   4. Trie-based autocomplete on any input#searchInput
    ============================================================ */
 
 // ── 1. THEME TOGGLE ─────────────────────────────────────────
 (function initTheme() {
   const saved = localStorage.getItem('ll_theme') || 'dark';
-  if (saved === 'light') document.body.classList.add('light');
-
+  if (saved === 'light') {
+    document.documentElement.classList.add('light');
+    document.body.classList.add('light');
+  }
   const btn = document.getElementById('themeToggle');
   if (!btn) return;
   btn.addEventListener('click', () => {
     const isLight = document.body.classList.toggle('light');
+    document.documentElement.classList.toggle('light', isLight);
     localStorage.setItem('ll_theme', isLight ? 'light' : 'dark');
   });
+})();
+
+// ── 2. AUTH GUARD ────────────────────────────────────────────
+(function authGuard() {
+  const token = localStorage.getItem('ll_token');
+  if (!token) {
+    location.replace('login.html');
+    return;
+  }
+
+  // Show logged-in user's name in topbar
+  try {
+    const user = JSON.parse(localStorage.getItem('ll_user') || '{}');
+    const nameEl = document.querySelector('.user-name');
+    const roleEl = document.querySelector('.user-role');
+    const avatarEl = document.querySelector('.avatar');
+    if (nameEl && user.username) nameEl.textContent = user.username;
+    if (roleEl) roleEl.textContent = 'User';
+    if (avatarEl && user.username) avatarEl.textContent = user.username.slice(0,2).toUpperCase();
+  } catch(_) {}
+})();
+
+// ── 3. LOGOUT helper (call from any page) ───────────────────
+function logout() {
+  localStorage.removeItem('ll_token');
+  localStorage.removeItem('ll_user');
+  location.replace('login.html');
+}
+
+// ── 4. FETCH WRAPPER — auto-attaches Authorization header ───
+// Override global fetch so every API call includes the JWT
+(function patchFetch() {
+  const _fetch = window.fetch.bind(window);
+  window.fetch = function(url, opts = {}) {
+    const token = localStorage.getItem('ll_token');
+    if (token && typeof url === 'string' && url.includes('localhost:5000')) {
+      opts.headers = {
+        ...opts.headers,
+        'Authorization': 'Bearer ' + token,
+      };
+    }
+    return _fetch(url, opts).then(res => {
+      // If token expired, redirect to login
+      if (res.status === 401) {
+        localStorage.removeItem('ll_token');
+        localStorage.removeItem('ll_user');
+        location.replace('login.html');
+      }
+      return res;
+    });
+  };
 })();
 
 
