@@ -59,17 +59,52 @@
         <svg class="icon-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun"  fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </div>
-      <div class="notif-btn">
+      <div class="notif-btn" id="notifBtn" onclick="toggleNotifDropdown(event)" style="cursor:pointer">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span class="notif-dot"></span>
+        <span class="notif-dot" id="notifDot"></span>
       </div>
-      <div class="user-chip" onclick="logout()" title="Click to logout" style="cursor:pointer">
+      <div id="notifDropdown" style="display:none;position:absolute;top:calc(var(--topbar-h) + 8px);right:80px;
+        width:320px;background:#0f1520;border:1px solid var(--border-bright);border-radius:12px;
+        box-shadow:0 16px 48px rgba(0,0,0,.5);z-index:999;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;
+          border-bottom:1px solid var(--border)">
+          <span style="font-size:13px;font-weight:700">Notifications</span>
+          <span onclick="clearNotifs()" style="font-size:11px;color:var(--accent-blue);cursor:pointer">Clear all</span>
+        </div>
+        <div id="notifList" style="max-height:280px;overflow-y:auto"></div>
+        <div style="padding:10px 16px;border-top:1px solid var(--border);text-align:center">
+          <a href="alerts.html" style="font-size:12px;color:var(--accent-blue);text-decoration:none;font-weight:600">
+            View all alerts →
+          </a>
+        </div>
+      </div>
+      <div class="user-chip" onclick="toggleUserMenu(event)" style="cursor:pointer" id="userChip">
         <div class="avatar">JD</div>
         <div class="user-info">
           <div class="user-name">Jane D.</div>
-          <div class="user-role">Admin</div>
+          <div class="user-role">User</div>
         </div>
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:12px;height:12px;color:var(--text-dim)"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:12px;height:12px;color:var(--text-dim)"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <!-- User dropdown -->
+      <div class="user-dropdown" id="userDropdown">
+        <div class="ud-header">
+          <div class="ud-avatar">JD</div>
+          <div>
+            <div class="ud-name">Jane D.</div>
+            <div class="ud-email" id="udEmail">—</div>
+          </div>
+        </div>
+        <div class="ud-divider"></div>
+        <div class="ud-item" onclick="location.href='settings.html'">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </div>
+        <div class="ud-divider"></div>
+        <div class="ud-item ud-logout" onclick="logout()">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </div>
       </div>
     </div>
   </header>
@@ -218,13 +253,71 @@
           </div>
         </div>
 
-        <!-- Upload row -->
-        <label class="upload-area">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Upload .log file to begin parsing
-          <input type="file" id="fileInput" accept=".log,.txt" />
-          <button id="uploadBtn" style="display:none"></button>
-        </label>
+        <!-- Upload + Write area -->
+        <div class="upload-write-wrap">
+
+          <!-- Tab switcher -->
+          <div class="uw-tabs">
+            <button class="uw-tab active" id="tabUpload" onclick="switchUWTab('upload')">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload Files
+            </button>
+            <button class="uw-tab" id="tabWrite" onclick="switchUWTab('write')">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              Write Manually
+            </button>
+          </div>
+
+          <!-- UPLOAD PANEL -->
+          <div class="uw-panel" id="panelUpload">
+            <!-- Drop zone -->
+            <label class="drop-zone" id="dropZone">
+              <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div class="dz-title">Drop .log files here or click to browse</div>
+              <div class="dz-sub">Supports multiple files — .log, .txt — all formats parsed automatically</div>
+              <input type="file" id="fileInput" accept=".log,.txt" multiple />
+            </label>
+
+            <!-- File queue -->
+            <div class="file-queue" id="fileQueue" style="display:none"></div>
+
+            <!-- Upload button -->
+            <div class="uw-actions" id="uwActions" style="display:none">
+              <button class="uw-btn-primary" id="uploadBtn" onclick="uploadFiles()">
+                <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload &amp; Parse All
+              </button>
+              <button class="uw-btn-secondary" onclick="clearFiles()">Clear</button>
+            </div>
+
+            <!-- Progress -->
+            <div class="upload-progress" id="uploadProgress" style="display:none">
+              <div class="up-label" id="upLabel">Parsing…</div>
+              <div class="up-bar"><div class="up-fill" id="upFill"></div></div>
+            </div>
+          </div>
+
+          <!-- WRITE PANEL -->
+          <div class="uw-panel" id="panelWrite" style="display:none">
+            <div class="write-hint">
+              Write one log entry per line. Supported formats:
+              <span class="fmt-chip">[timestamp] LEVEL - message</span>
+              <span class="fmt-chip">LEVEL: message</span>
+              <span class="fmt-chip">JSON</span>
+            </div>
+            <textarea class="log-textarea" id="logTextarea"
+              placeholder="[2024-01-15T10:30:00Z] ERROR - Database connection timeout&#10;[2024-01-15T10:30:01Z] WARNING - Retry attempt 1&#10;[2024-01-15T10:30:02Z] INFO - Query executed successfully"></textarea>
+            <div class="uw-actions">
+              <button class="uw-btn-primary" onclick="submitWritten()">
+                <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Submit Logs
+              </button>
+              <button class="uw-btn-secondary" onclick="document.getElementById('logTextarea').value=''">Clear</button>
+              <button class="uw-btn-secondary" onclick="insertSample()">Insert Sample</button>
+            </div>
+          </div>
+
+        </div>
 
         <!-- Alert bar -->
         <div class="alert-bar" id="alertBox">
@@ -269,7 +362,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="app.js"></script>
   <script src="theme.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

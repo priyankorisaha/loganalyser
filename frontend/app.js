@@ -1,16 +1,186 @@
 const API_BASE = 'http://localhost:5000/api';
 
 // ── DOM refs ──────────────────────────────────────────────────
-const fileInput   = document.getElementById('fileInput');
-const uploadBtn   = document.getElementById('uploadBtn');
 const typeFilter  = document.getElementById('typeFilter');
 const searchInput = document.getElementById('searchInput');
 const refreshBtn  = document.getElementById('refreshBtn');
 const alertBox    = document.getElementById('alertBox');
 const alertText   = document.getElementById('alertText');
 
-// ── Upload trigger on file select ────────────────────────────
-fileInput.addEventListener('change', () => { if (fileInput.files[0]) uploadLogFile(); });
+// ── File queue (multi-file state) ────────────────────────────
+let fileQueue = [];
+
+// ── Tab switcher (Upload / Write) ────────────────────────────
+function switchUWTab(tab) {
+  document.getElementById('panelUpload').style.display = tab === 'upload' ? '' : 'none';
+  document.getElementById('panelWrite').style.display  = tab === 'write'  ? '' : 'none';
+  document.getElementById('tabUpload').classList.toggle('active', tab === 'upload');
+  document.getElementById('tabWrite').classList.toggle('active',  tab === 'write');
+}
+
+// ── File input change (multiple files) ───────────────────────
+document.getElementById('fileInput').addEventListener('change', function() {
+  addFilesToQueue([...this.files]);
+  this.value = ''; // reset so same file can be re-added
+});
+
+// ── Drag & Drop ───────────────────────────────────────────────
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const files = [...e.dataTransfer.files].filter(f => f.name.match(/\.(log|txt)$/i));
+  if (!files.length) { showAlert('Only .log and .txt files are supported'); return; }
+  addFilesToQueue(files);
+});
+
+// ── Add files to queue ────────────────────────────────────────
+function addFilesToQueue(files) {
+  files.forEach(file => {
+    // avoid duplicates by name
+    if (!fileQueue.find(f => f.file.name === file.name)) {
+      fileQueue.push({ file, status: 'pending', parsed: 0 });
+    }
+  });
+  renderFileQueue();
+}
+
+function renderFileQueue() {
+  const el    = document.getElementById('fileQueue');
+  const acts  = document.getElementById('uwActions');
+  if (!fileQueue.length) { el.style.display = 'none'; acts.style.display = 'none'; return; }
+  el.style.display   = 'flex';
+  acts.style.display = 'flex';
+
+  el.innerHTML = fileQueue.map((item, i) => {
+    const size = item.file.size < 1024
+      ? item.file.size + ' B'
+      : item.file.size < 1024*1024
+        ? (item.file.size/1024).toFixed(1) + ' KB'
+        : (item.file.size/1024/1024).toFixed(1) + ' MB';
+
+    const statusText = {
+      pending: 'Queued',
+      parsing: 'Parsing…',
+      done:    `✓ ${item.parsed} logs`,
+      error:   '✗ Failed'
+    }[item.status];
+
+    return `<div class="fq-item" id="fq-${i}">
+      <span class="fq-icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+      <span class="fq-name" title="${item.file.name}">${item.file.name}</span>
+      <span class="fq-size">${size}</span>
+      <span class="fq-status ${item.status}">${statusText}</span>
+      ${item.status === 'pending' ? `<button class="fq-remove" onclick="removeFromQueue(${i})"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function removeFromQueue(i) {
+  fileQueue.splice(i, 1);
+  renderFileQueue();
+}
+
+function clearFiles() {
+  fileQueue = [];
+  renderFileQueue();
+}
+
+// ── Upload & parse ALL queued files ──────────────────────────
+async function uploadFiles() {
+  if (!fileQueue.length) return;
+
+  const prog  = document.getElementById('uploadProgress');
+  const fill  = document.getElementById('upFill');
+  const label = document.getElementById('upLabel');
+  prog.style.display = 'block';
+
+  let totalParsed = 0;
+  let totalFiles  = fileQueue.length;
+
+  for (let i = 0; i < fileQueue.length; i++) {
+    const item = fileQueue[i];
+    if (item.status === 'done') continue; // skip already uploaded
+
+    item.status = 'parsing';
+    renderFileQueue();
+    label.textContent = `Parsing ${item.file.name} (${i+1}/${totalFiles})…`;
+    fill.style.width  = Math.round(((i) / totalFiles) * 100) + '%';
+
+    try {
+      const text = await item.file.text();
+      const logs = text.split(/\r?\n/).filter(l => l.trim()).map(parseLine).filter(Boolean);
+
+      if (!logs.length) {
+        item.status = 'error';
+        renderFileQueue();
+        continue;
+      }
+
+      const res  = await fetch(`${API_BASE}/logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logs }),
+      });
+      const data = await res.json();
+      item.status = 'done';
+      item.parsed = data.inserted || logs.length;
+      totalParsed += item.parsed;
+      if (data.alert) showAlert(data.alert);
+
+    } catch(e) {
+      item.status = 'error';
+    }
+    renderFileQueue();
+  }
+
+  fill.style.width  = '100%';
+  label.textContent = `✓ Done — ${totalParsed} logs uploaded from ${totalFiles} file(s)`;
+  setTimeout(() => { prog.style.display = 'none'; fill.style.width = '0'; }, 3000);
+
+  await loadLogs();
+}
+
+// ── Manual write & submit ─────────────────────────────────────
+async function submitWritten() {
+  const raw = document.getElementById('logTextarea').value.trim();
+  if (!raw) { showAlert('Please write some log lines first'); return; }
+
+  const logs = raw.split(/\r?\n/).filter(l => l.trim()).map(parseLine).filter(Boolean);
+  if (!logs.length) { showAlert('No valid log lines found — check format hints above'); return; }
+
+  try {
+    const res  = await fetch(`${API_BASE}/logs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ logs }),
+    });
+    const data = await res.json();
+    showAlert(`✓ ${data.inserted || logs.length} log entries submitted successfully`, 'success');
+    document.getElementById('logTextarea').value = '';
+    if (data.alert) setTimeout(() => showAlert(data.alert), 1500);
+    await loadLogs();
+  } catch(e) {
+    // fallback: render locally
+    renderLocalLogs(logs);
+    showAlert('Backend unreachable — showing parsed logs locally');
+  }
+}
+
+// ── Insert sample logs into textarea ─────────────────────────
+function insertSample() {
+  const now = new Date().toISOString().slice(0, 19) + 'Z';
+  document.getElementById('logTextarea').value =
+`[${now}] INFO - Server started successfully
+[${now}] WARNING - Slow query detected (took 2300ms)
+[${now}] ERROR - Database connection timeout on host 192.168.1.50
+[${now}] ERROR - Payment gateway failed: connection refused
+[${now}] INFO - User login successful (id: 1042)
+[${now}] WARNING - Memory usage at 87%
+[${now}] ERROR - Null pointer exception in AuthService.java:142`;
+}
 
 // ── Classify any text as INFO / WARNING / ERROR ──────────────
 function classifyLog(text) {
@@ -72,32 +242,6 @@ function parseLine(line) {
 
   // FALLBACK — classify the whole line
   return { timestamp: new Date().toISOString(), type: classifyLog(line), message: line, formatMatched: 'FALLBACK' };
-}
-
-// ── Upload & parse ───────────────────────────────────────────
-async function uploadLogFile() {
-  const file = fileInput.files[0];
-  if (!file) return;
-
-  const text = await file.text();
-  const logs = text.split(/\r?\n/).filter(l => l.trim()).map(parseLine).filter(Boolean);
-  if (!logs.length) { showAlert('File appears to be empty.'); return; }
-
-  try {
-    const response = await fetch(`${API_BASE}/logs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ logs }),
-    });
-    const data = await response.json();
-    if (data.alert) showAlert(data.alert);
-    else hideAlert();
-  } catch (e) {
-    console.warn('Backend unavailable — rendering local parse only.');
-    renderLocalLogs(logs);
-    return;
-  }
-  await loadLogs();
 }
 
 // ── Render without backend ───────────────────────────────────
@@ -320,20 +464,90 @@ function fmtNum(n) {
 function escHtml(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-function showAlert(msg) {
+function showAlert(msg, type = 'error') {
+  if (!alertBox || !alertText) return;
   alertText.textContent = msg;
-  alertBox.classList.add('show');
+  alertBox.className = 'alert-bar show';
+  alertBox.style.background = type === 'success'
+    ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+  alertBox.style.borderColor = type === 'success'
+    ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)';
+  alertBox.style.color = type === 'success'
+    ? 'var(--accent-green)' : 'var(--accent-red)';
+  if (type === 'success') setTimeout(hideAlert, 3000);
 }
-function hideAlert() { alertBox.classList.remove('show'); }
+function hideAlert() { if (alertBox) alertBox.classList.remove('show'); }
 
 // ── Event listeners ───────────────────────────────────────────
 typeFilter.addEventListener('change', loadLogs);
 searchInput.addEventListener('input', () => { clearTimeout(searchInput._t); searchInput._t = setTimeout(loadLogs, 300); });
 refreshBtn.addEventListener('click', loadLogs);
 
-// ── Init ──────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  buildVolumeChart();
-  buildDonutChart();
-  loadLogs();
+// ── Notifications ─────────────────────────────────────────────
+let notifications = JSON.parse(localStorage.getItem('ll_notifs') || '[]');
+
+function saveNotifs() { localStorage.setItem('ll_notifs', JSON.stringify(notifications)); }
+
+function addNotif(msg, type = 'error') {
+  notifications.unshift({ msg, type, time: new Date().toISOString() });
+  if (notifications.length > 20) notifications = notifications.slice(0, 20);
+  saveNotifs();
+  updateNotifBadge();
+}
+
+function updateNotifBadge() {
+  const dot = document.getElementById('notifDot');
+  if (!dot) return;
+  dot.style.display = notifications.length ? 'block' : 'none';
+}
+
+function toggleNotifDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('notifDropdown');
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) renderNotifList();
+}
+
+function renderNotifList() {
+  const el = document.getElementById('notifList');
+  if (!el) return;
+  if (!notifications.length) {
+    el.innerHTML = `<div style="padding:32px 16px;text-align:center;color:var(--text-dim);font-size:13px">No notifications yet</div>`;
+    return;
+  }
+  el.innerHTML = notifications.map((n, i) => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:12px 16px;
+      border-bottom:1px solid rgba(255,255,255,.03);font-size:12.5px">
+      <div style="width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0;
+        background:${n.type==='error'?'var(--accent-red)':n.type==='warning'?'var(--accent-yellow)':'var(--accent-green)'}"></div>
+      <div style="flex:1;min-width:0">
+        <div style="color:var(--text-primary);line-height:1.4">${String(n.msg).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
+        <div style="color:var(--text-dim);font-size:11px;margin-top:3px">${new Date(n.time).toLocaleTimeString()}</div>
+      </div>
+      <span onclick="removeNotif(${i})" style="color:var(--text-dim);cursor:pointer;font-size:16px;flex-shrink:0;line-height:1">×</span>
+    </div>`).join('');
+}
+
+function removeNotif(i) {
+  notifications.splice(i, 1); saveNotifs(); renderNotifList(); updateNotifBadge();
+}
+function clearNotifs() {
+  notifications = []; saveNotifs(); renderNotifList(); updateNotifBadge();
+}
+
+document.addEventListener('click', () => {
+  const dd = document.getElementById('notifDropdown');
+  if (dd) dd.style.display = 'none';
 });
+
+// ── Init ──────────────────────────────────────────────────────
+// theme.js loads before app.js now, so token is already attached to fetch.
+// Run immediately — no need to wait for DOMContentLoaded since scripts are at bottom of body.
+buildVolumeChart();
+buildDonutChart();
+loadLogs();
+updateNotifBadge();
+
+// Auto-refresh every 30 seconds
+setInterval(loadLogs, 30000);
