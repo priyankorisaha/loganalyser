@@ -198,6 +198,7 @@
       <div class="nav-icon" title="Reports" onclick="location.href='reports.html'">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       </div>
+      
     </nav>
     <div class="sidebar-bottom">
       <div class="nav-icon active" title="Settings">
@@ -227,7 +228,7 @@
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         <span class="notif-dot"></span>
       </div>
-      <div class="user-chip">
+      <div class="user-chip" onclick="logout()" style="cursor:pointer" title="Logout">
         <div class="avatar">JD</div>
         <div class="user-info"><div class="user-name">Jane D.</div><div class="user-role">Admin</div></div>
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:12px;height:12px;color:var(--text-dim)"><polyline points="6 9 12 15 18 9"/></svg>
@@ -303,7 +304,31 @@
             </div>
           </div>
         </div>
-
+<!-- Email Alert Settings -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <div class="settings-card-icon icon-green">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="m4 7 8 6 8-6"/></svg>
+            </div>
+            <div>
+              <div class="settings-card-title">Email Alerting</div>
+              <div class="settings-card-sub">Automated production email notifications</div>
+            </div>
+          </div>
+          <div class="settings-body">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">Enable Email Alerts</div>
+                <div class="toggle-sub">Sends alerts for error bursts, anomalies, and warning spikes</div>
+              </div>
+              <label class="toggle"><input type="checkbox" id="emailAlertsEnabled" /><span class="toggle-slider"></span></label>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label">Recipient Email</div>
+              <input type="email" class="setting-input" id="alertRecipientEmail" placeholder="ops-team@company.com" />
+            </div>
+          </div>
+        </div>
         <!-- Display Preferences -->
         <div class="settings-card">
           <div class="settings-card-header">
@@ -418,10 +443,13 @@
       </div><!-- /settings-grid -->
 
       <div class="save-bar">
-        <button class="save-btn" id="saveBtn">Save Settings</button>
-        <button class="reset-btn" id="resetBtn">Reset to Defaults</button>
-        <span class="save-msg" id="saveMsg">✓ Settings saved</span>
-      </div>
+  <button class="save-btn" id="saveBtn">Save Settings</button>
+  <button class="reset-btn" id="resetBtn">Reset to Defaults</button>
+  <button class="reset-btn" id="signOutBtn" style="border-color: rgba(239,68,68,0.45); color: var(--accent-red);">
+    Sign Out
+  </button>
+  <span class="save-msg" id="saveMsg">✓ Settings saved</span>
+</div>
     </div>
   </main>
 
@@ -435,6 +463,8 @@
       showRaw: false,
       highlightErrors: true,
       rowsPerPage: 50,
+       emailAlertsEnabled: false,
+      alertRecipientEmail: '',
     };
 
     function load() {
@@ -448,6 +478,8 @@
       document.getElementById('showRaw').checked            = s.showRaw          ?? DEFAULTS.showRaw;
       document.getElementById('highlightErrors').checked    = s.highlightErrors  ?? DEFAULTS.highlightErrors;
       document.getElementById('rowsPerPage').value          = s.rowsPerPage      ?? DEFAULTS.rowsPerPage;
+      document.getElementById('emailAlertsEnabled').checked = s.emailAlertsEnabled ?? DEFAULTS.emailAlertsEnabled;
+      document.getElementById('alertRecipientEmail').value   = s.alertRecipientEmail ?? DEFAULTS.alertRecipientEmail;
       document.getElementById('hThreshold').textContent    = (s.threshold ?? DEFAULTS.threshold) + ' errors';
     }
 
@@ -460,6 +492,8 @@
         showRaw:         document.getElementById('showRaw').checked,
         highlightErrors: document.getElementById('highlightErrors').checked,
         rowsPerPage:     parseInt(document.getElementById('rowsPerPage').value),
+        emailAlertsEnabled: document.getElementById('emailAlertsEnabled').checked,
+        alertRecipientEmail: document.getElementById('alertRecipientEmail').value.trim(),
       };
       localStorage.setItem('ll_settings', JSON.stringify(s));
       localStorage.setItem('ll_threshold', s.threshold); // used by alerts.html
@@ -515,10 +549,11 @@
     });
 
     document.getElementById('testBtn').addEventListener('click', testConnection);
-    document.getElementById('saveBtn').addEventListener('click', save);
-    document.getElementById('resetBtn').addEventListener('click', reset);
+document.getElementById('saveBtn').addEventListener('click', save);
+document.getElementById('resetBtn').addEventListener('click', reset);
+document.getElementById('signOutBtn').addEventListener('click', logout);
 
-    load();
+load();
   </script>
   
 </body>

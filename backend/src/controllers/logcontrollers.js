@@ -1,74 +1,228 @@
 const Log = require('../models/logs');
+const User = require('../models/user');
+const { sendAlertEmail } = require('../services/emailServices');
 
 // ── DSA: Query parser (from logAnalysisService) ──────────────
 let parseAdvancedQuery, detectPatterns, buildInsights;
+
 try {
-  ({ parseAdvancedQuery, detectPatterns, buildInsights } = require('../services/logAnalysisService'));
+  ({
+    parseAdvancedQuery,
+    detectPatterns,
+    buildInsights,
+  } = require('../services/logAnalysisService'));
 } catch (_) {
-  parseAdvancedQuery = () => ({ text: [], level: null, source: null, message: null });
-  detectPatterns     = () => [];
-  buildInsights      = () => ({ topSources: [], topErrors: [], anomalies: [] });
+  parseAdvancedQuery = () => ({
+    text: [],
+    level: null,
+    source: null,
+    message: null,
+  });
+
+  detectPatterns = () => [];
+
+  buildInsights = () => ({
+    topSources: [],
+    topErrors: [],
+    anomalies: [],
+  });
 }
 
 // ── In-memory alert rules & history (per-process) ────────────
-const alertRules   = [];
+const alertRules = [];
 const alertHistory = [];
 
 function buildQuery({ type, search, start, end, source }, userId) {
-  const query = { userId };   // ← ALWAYS filter by owner
-  if (type)   query.type    = type.toUpperCase();
-  if (source) query.source  = { $regex: source, $options: 'i' };
-  if (search) query.message = { $regex: search, $options: 'i' };
+  const query = { userId };
+
+  if (type) {
+    query.type = type.toUpperCase();
+  }
+
+  if (source) {
+    query.source = { $regex: source, $options: 'i' };
+  }
+
+  if (search) {
+    query.message = { $regex: search, $options: 'i' };
+  }
+
   if (start || end) {
     query.timestamp = {};
-    if (start) query.timestamp.$gte = start;
-    if (end)   query.timestamp.$lte = end;
+
+    if (start) {
+      query.timestamp.$gte = start;
+    }
+
+    if (end) {
+      query.timestamp.$lte = end;
+    }
   }
+
   return query;
 }
 
 function evaluateRules(logs) {
   const now = Date.now();
-  alertRules.forEach(rule => {
+
+  alertRules.forEach((rule) => {
     const windowStart = now - (rule.windowSeconds || 60) * 1000;
-    const inWindow    = logs.filter(l =>
-      new Date(l.createdAt || l.timestamp).getTime() >= windowStart
-    );
+
+    const inWindow = logs.filter((l) => {
+      return (
+        new Date(l.createdAt || l.timestamp).getTime() >= windowStart
+      );
+    });
+
     let triggered = false;
-    if (rule.kind === 'error_count')
-      triggered = inWindow.filter(l => l.type === 'ERROR' || l.type === 'CRITICAL').length > rule.threshold;
-    if (rule.kind === 'source_severity')
-      triggered = inWindow.some(l => l.source === rule.source && l.type === rule.severity);
-    if (triggered)
+
+    if (rule.kind === 'error_count') {
+      triggered =
+        inWindow.filter(
+          (l) => l.type === 'ERROR' || l.type === 'CRITICAL'
+        ).length > rule.threshold;
+    }
+
+    if (rule.kind === 'source_severity') {
+      triggered = inWindow.some(
+        (l) =>
+          l.source === rule.source &&
+          l.type === rule.severity
+      );
+    }
+
+    if (triggered) {
       alertHistory.unshift({
         id: `${now}-${Math.random()}`,
-        ruleName:    rule.name,
+        ruleName: rule.name,
         triggeredAt: new Date().toISOString(),
-        severity:    rule.severity || 'ERROR',
+        severity: rule.severity || 'ERROR',
       });
+    }
   });
+}
+
+async function triggerEmailAlerts(insertedLogs, userId) {
+  const user = await User.findById(userId)
+    .select('emailAlertSettings email')
+    .lean();
+
+  const settings = user?.emailAlertSettings;
+
+  // Feature guard
+  if (!settings?.enabled) {
+    return [];
+  }
+
+  const recipient = settings.recipientEmail || user.email;
+
+  if (!recipient) {
+    return [];
+  }
+
+  const errorCount = insertedLogs.filter((l) =>
+    ['ERROR', 'CRITICAL'].includes(l.type)
+  ).length;
+
+  const warningCount = insertedLogs.filter(
+    (l) => l.type === 'WARNING'
+  ).length;
+
+  const anomalies = buildInsights(insertedLogs).anomalies;
+
+  const events = [];
+
+  if (errorCount > (settings.errorThreshold || 10)) {
+    events.push({
+      alertType: 'Error Threshold Exceeded',
+      severity: 'HIGH',
+      summary: `${errorCount} error/critical logs exceeded threshold ${
+        settings.errorThreshold || 10
+      }`,
+    });
+  }
+
+  if (anomalies.length > 0) {
+    events.push({
+      alertType: 'Anomaly Detected',
+      severity: 'HIGH',
+      summary: `${anomalies.length} recurring anomalous error patterns detected in latest batch.`,
+    });
+  }
+
+  if (warningCount > (settings.warningThreshold || 25)) {
+    events.push({
+      alertType: 'Warning Spike',
+      severity: 'MEDIUM',
+      summary: `${warningCount} warnings exceeded threshold ${
+        settings.warningThreshold || 25
+      }`,
+    });
+  }
+
+  for (const event of events) {
+    await sendAlertEmail({
+      to: recipient,
+      alertType: event.alertType,
+      severity: event.severity,
+      timestamp: new Date().toISOString(),
+      summary: event.summary,
+    });
+  }
+
+  return events;
 }
 
 // POST /api/logs
 exports.createLogs = async (req, res) => {
   try {
-    const payload = Array.isArray(req.body) ? req.body : req.body.logs;
-    if (!Array.isArray(payload) || payload.length === 0)
-      return res.status(400).json({ error: 'Expected a non-empty logs array' });
+    const payload = Array.isArray(req.body)
+      ? req.body
+      : req.body.logs;
+
+    if (!Array.isArray(payload) || payload.length === 0) {
+      return res.status(400).json({
+        error: 'Expected a non-empty logs array',
+      });
+    }
 
     // Attach userId to every log
-    const withUser = payload.map(l => ({ ...l, userId: req.userId }));
-    const inserted = await Log.insertMany(withUser, { ordered: false });
+    const withUser = payload.map((l) => ({
+      ...l,
+      userId: req.userId,
+    }));
+
+    const inserted = await Log.insertMany(withUser, {
+      ordered: false,
+    });
+
     evaluateRules(inserted);
 
-    const errorCount = inserted.filter(l => l.type === 'ERROR').length;
-    const threshold  = Number(process.env.ALERT_ERROR_THRESHOLD || 10);
+    const emailAlerts = await triggerEmailAlerts(
+      inserted,
+      req.userId
+    );
+
+    const errorCount = inserted.filter(
+      (l) => l.type === 'ERROR'
+    ).length;
+
+    const threshold = Number(
+      process.env.ALERT_ERROR_THRESHOLD || 10
+    );
+
     return res.status(201).json({
       inserted: inserted.length,
-      alert: errorCount > threshold ? `ALERT: ${errorCount} errors exceed threshold of ${threshold}` : null,
+      alert:
+        errorCount > threshold
+          ? `ALERT: ${errorCount} errors exceed threshold of ${threshold}`
+          : null,
+      emailAlerts,
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      error: err.message,
+    });
   }
 };
 
@@ -76,64 +230,108 @@ exports.createLogs = async (req, res) => {
 exports.getLogs = async (req, res) => {
   try {
     const query = buildQuery(req.query, req.userId);
-    let logs = await Log.find(query).sort({ createdAt: -1 }).lean();
+
+    let logs = await Log.find(query)
+      .sort({ createdAt: -1 })
+      .lean();
 
     // Advanced query string support
     if (req.query.q) {
       const adv = parseAdvancedQuery(req.query.q);
-      logs = logs.filter(l =>
-        (!adv.level   || l.type === adv.level) &&
-        (!adv.source  || (l.source||'').toLowerCase().includes(adv.source)) &&
-        (!adv.message || l.message.toLowerCase().includes(adv.message)) &&
-        adv.text.every(t => l.message.toLowerCase().includes(t))
-      );
+
+      logs = logs.filter((l) => {
+        return (
+          (!adv.level || l.type === adv.level) &&
+          (!adv.source ||
+            (l.source || '')
+              .toLowerCase()
+              .includes(adv.source)) &&
+          (!adv.message ||
+            l.message
+              .toLowerCase()
+              .includes(adv.message)) &&
+          adv.text.every((t) =>
+            l.message.toLowerCase().includes(t)
+          )
+        );
+      });
     }
 
     const summary = logs.reduce(
-      (a, l) => { a[l.type] = (a[l.type] || 0) + 1; return a; },
-      { INFO: 0, WARNING: 0, ERROR: 0, CRITICAL: 0 }
+      (a, l) => {
+        a[l.type] = (a[l.type] || 0) + 1;
+        return a;
+      },
+      {}
     );
 
-    return res.json({ total: logs.length, summary, logs, insights: buildInsights(logs) });
+    return res.json({
+      total: logs.length,
+      summary,
+      logs,
+      patterns: detectPatterns(logs),
+      insights: buildInsights(logs),
+    });
+
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      error: err.message,
+    });
   }
 };
 
-// GET /api/patterns
 exports.getPatterns = async (req, res) => {
   try {
-    const logs = await Log.find({ userId: req.userId }).sort({ createdAt: -1 }).limit(2000).lean();
-    return res.json({ patterns: detectPatterns(logs) });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-};
-
-// GET /api/exports
-exports.exportData = async (req, res) => {
-  try {
-    const logs     = await Log.find({ userId: req.userId }).sort({ createdAt: -1 }).limit(5000).lean();
-    const patterns = detectPatterns(logs);
+    const query = buildQuery(req.query, req.userId);
+    const logs = await Log.find(query).lean();
     return res.json({
-      generatedAt: new Date().toISOString(),
-      logs, patterns, alerts: alertHistory,
+      patterns: detectPatterns(logs),
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 };
 
-// Alert rules (in-memory, shared for simplicity)
-exports.createRule    = (req, res) => {
-  const rule = { ...req.body, id: `rule-${Date.now()}` };
-  alertRules.push(rule);
-  res.status(201).json(rule);
+exports.createRule = async (req, res) => {
+  try {
+    const rule = req.body;
+    if (!rule || !rule.id || !rule.name) {
+      return res.status(400).json({ error: 'Invalid rule payload' });
+    }
+
+    alertRules.push(rule);
+    return res.status(201).json({ rule });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 };
-exports.getRules      = (_req, res) => res.json({ rules: alertRules });
-exports.deleteRule    = (req, res) => {
-  const idx = alertRules.findIndex(r => r.id === req.params.id);
-  if (idx >= 0) alertRules.splice(idx, 1);
-  res.json({ ok: true });
+
+exports.getRules = async (_req, res) => {
+  return res.json({ rules: alertRules });
 };
-exports.getAlertHistory = (_req, res) => res.json({ alerts: alertHistory.slice(0, 100) });
+
+exports.deleteRule = async (req, res) => {
+  const id = req.params.id;
+  const index = alertRules.findIndex((r) => r.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Rule not found' });
+  }
+
+  alertRules.splice(index, 1);
+  return res.json({ success: true });
+};
+
+exports.getAlertHistory = async (_req, res) => {
+  return res.json({ history: alertHistory });
+};
+
+exports.exportData = async (req, res) => {
+  try {
+    const query = buildQuery(req.query, req.userId);
+    const logs = await Log.find(query).lean();
+    return res.json({ exported: logs });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};

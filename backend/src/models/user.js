@@ -5,6 +5,12 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true, trim: true, minlength: 3 },
   email:    { type: String, required: true, unique: true, trim: true, lowercase: true },
   password: { type: String, required: true, minlength: 6 },
+   emailAlertSettings: {
+    enabled: { type: Boolean, default: false },
+    recipientEmail: { type: String, trim: true, lowercase: true, default: '' },
+    warningThreshold: { type: Number, default: 25, min: 1 },
+    errorThreshold: { type: Number, default: 10, min: 1 },
+  },
 }, { timestamps: true });
 
 // Hash password before saving

@@ -1,6 +1,7 @@
 const express  = require('express');
 const auth     = require('../middleware/auth');
 const { register, login, me } = require('../controllers/authcontroller');
+const { getAlertSettings, updateAlertSettings } = require('../controllers/alertSettingsControllers');
 const {
   createLogs, getLogs, getPatterns,
   createRule, getRules, deleteRule,
@@ -24,5 +25,7 @@ router.post  ('/alert-rules',       auth, createRule);
 router.get   ('/alert-rules',       auth, getRules);
 router.delete('/alert-rules/:id',   auth, deleteRule);
 router.get   ('/alerts/history',    auth, getAlertHistory);
+router.get   ('/alert-settings',    auth, getAlertSettings);
+router.put   ('/alert-settings',    auth, updateAlertSettings);
 
 module.exports = router;

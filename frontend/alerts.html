@@ -176,7 +176,7 @@
         </a>
       </div>
     </div>
-    <div class="user-chip"><div class="avatar">JD</div><div class="user-info"><div class="user-name">Jane D.</div><div class="user-role">Admin</div></div></div>
+    <div class="user-chip" onclick="logout()" style="cursor:pointer" title="Logout"><div class="avatar">JD</div><div class="user-info"><div class="user-name">Jane D.</div><div class="user-role">Admin</div></div></div>
   </div>
 </header>
 
@@ -274,7 +274,6 @@
   </div>
 </main>
 
-<script src="theme.js"></script>
 <script>
 const API='http://localhost:5000/api';
 const THRESHOLD=parseInt(localStorage.getItem('ll_threshold')||'10');
@@ -542,9 +541,7 @@ function refreshAll() {
 
 loadSummary();loadRules();
 updateNotifBadge();
-
-// Auto-refresh every 30 seconds
-setInterval(()=>{ loadSummary(); loadRules(); }, 30000);
 </script>
+<script src="theme.js"></script>
 </body>
 </html>

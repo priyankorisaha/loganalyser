@@ -57,8 +57,22 @@
     .field label{font-size:11.5px;font-weight:600;color:var(--text-secondary);
       text-transform:uppercase;letter-spacing:.7px}
     .input-wrap{position:relative}
-    .input-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);
-      width:16px;height:16px;color:var(--text-dim);pointer-events:none}
+    /* only the left lock/user icon */
+.input-wrap > svg{
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  width:16px;
+  height:16px;
+  color:var(--text-dim);
+  pointer-events:none;
+}
+
+/* make room for eye button on right */
+#password{
+  padding-right:42px;
+}
     .field input{
       width:100%;padding:11px 12px 11px 38px;
       background:rgba(255,255,255,.04);border:1px solid var(--border);
@@ -164,7 +178,7 @@
       <div class="input-wrap">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password"/>
-        <button class="eye-btn" type="button" onclick="togglePwd('password',this)">
+        <button class="eye-btn" type="button" onclick="togglePwd('password')" aria-label="Show password">
           <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
@@ -192,11 +206,11 @@ if(localStorage.getItem('ll_token')){
   }catch(_){}
 }
 
-function togglePwd(id,btn){
-  const inp=document.getElementById(id);
-  inp.type=inp.type==='password'?'text':'password';
+function togglePwd(id){
+  const inp = document.getElementById(id);
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
 }
-
 function showAlert(msg,type='error'){
   const box=document.getElementById('alertBox');
   document.getElementById('alertMsg').textContent=msg;
