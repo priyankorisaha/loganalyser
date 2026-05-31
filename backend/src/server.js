@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const logRoutes = require('./routes/logroutes');
+const aiRoutes = require('./routes/airoutes');
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -13,6 +15,7 @@ app.use(express.json({ limit: '2mb' }));
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.use('/api', logRoutes);
+app.use('/api/ai', aiRoutes);
 
 async function startServer(port) {
   return new Promise((resolve, reject) => {

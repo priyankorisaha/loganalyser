@@ -501,6 +501,18 @@ function dl(blob,name){
   a.download=name;a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),3000);
 }
+window.analyzePageLogs = async function(){
+  const token=localStorage.getItem('token');
+  const headers={'Content-Type':'application/json'}; if(token) headers.Authorization=`Bearer ${token}`;
+  const logs=(cachedData?.logs||[]).map(l=>l.message).slice(0,50);
+  if(!logs.length)return;
+  const r=await fetch(`${API}/ai/report`,{method:'POST',headers,body:JSON.stringify({logs})});
+  const d=await r.json();
+  const card=document.createElement('div');
+  card.className='panel';card.style.marginTop='12px';
+  card.innerHTML=`<div class='panel-header'><span class='panel-title'>AI Report</span></div><div style='padding:16px'><pre style='white-space:pre-wrap'>${JSON.stringify(d.report||d,null,2)}</pre></div>`;
+  document.querySelector('.content').appendChild(card);
+}
 
 document.getElementById('refreshBtn').onclick=load;
 load();

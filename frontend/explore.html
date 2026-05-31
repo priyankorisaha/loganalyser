@@ -503,4 +503,15 @@ renderSaved();runQuery();
 </script>
 
 </body>
-</html>
+</html><script>
+window.analyzePageLogs = async function(){
+  const row=document.querySelector('#exTbody tr td:nth-child(3)');
+  if(!row){alert('No logs to analyze');return;}
+  if(window.analyzeLogWithAI) return window.analyzeLogWithAI(row.innerText);
+  const token=localStorage.getItem('token');
+  const headers={'Content-Type':'application/json'}; if(token) headers.Authorization=`Bearer ${token}`;
+  const r=await fetch('http://localhost:5000/api/ai/analyze',{method:'POST',headers,body:JSON.stringify({log:row.innerText})});
+  const d=await r.json();
+  alert((d.aiResponse&&d.aiResponse.summary)||'Done');
+}
+</script>

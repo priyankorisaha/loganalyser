@@ -551,3 +551,54 @@ updateNotifBadge();
 
 // Auto-refresh every 30 seconds
 setInterval(loadLogs, 30000);
+// ── AI Analysis Integration ──────────────────────────────────
+function authHeaders() {
+  const token = localStorage.getItem('token');
+  return token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+}
+
+function ensureAIDrawer() {
+  if (document.getElementById('aiDrawer')) return;
+  const drawer = document.createElement('div');
+  drawer.id = 'aiDrawer';
+  drawer.style.cssText = 'position:fixed;top:0;right:-520px;width:500px;max-width:95vw;height:100vh;background:#0f1520;border-left:1px solid rgba(255,255,255,.1);z-index:5000;transition:right .3s;padding:20px;overflow:auto;color:#e8edf5;';
+  drawer.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><h3>AI Analysis</h3><button onclick="closeAIDrawer()">✕</button></div><div id="aiDrawerBody">Select a log to analyze.</div>`;
+  document.body.appendChild(drawer);
+}
+function openAIDrawer(){ensureAIDrawer();document.getElementById('aiDrawer').style.right='0'}
+function closeAIDrawer(){document.getElementById('aiDrawer').style.right='-520px'}
+
+async function analyzeLogWithAI(logMessage) {
+  ensureAIDrawer(); openAIDrawer();
+  const body = document.getElementById('aiDrawerBody');
+  body.innerHTML = '<div class="spinner"></div> Analyzing...';
+  try {
+    const r = await fetch(`${API_BASE}/ai/analyze`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ log: logMessage }) });
+    const d = await r.json();
+    const a = d.aiResponse || {};
+        if (!r.ok) {
+      body.innerHTML = `<div style="color:#ef4444">AI analysis request failed: ${d.error || r.status}</div>`;
+      return;
+    }
+    body.innerHTML = `<div style="display:grid;gap:10px">
+    
+      <div><b>${a.title || 'Analysis'}</b> <span style="padding:2px 8px;border-radius:999px;background:#ef444433">${a.severity || d.severity || 'UNKNOWN'}</span></div>
+      <div><b>Problem:</b> ${a.problem || '-'}</div><div><b>Root Cause:</b> ${a.rootCause || '-'}</div>
+      <div><b>Fixes:</b><ul>${(a.fixes || []).map(x=>`<li>✓ ${x}</li>`).join('')}</ul></div>
+      <div><b>Prevention:</b><ul>${(a.prevention || []).map(x=>`<li>✓ ${x}</li>`).join('')}</ul></div>
+      <div><b>Technical Summary:</b> ${a.summary || '-'}</div>
+      <div style="font-size:12px;opacity:.7">Analyzed at: ${new Date(d.createdAt || Date.now()).toLocaleString()}</div>
+            <div style="display:flex;gap:8px">
+        <button onclick="navigator.clipboard.writeText(document.getElementById('aiDrawerBody').innerText)">Copy analysis</button>
+        <button id="regenBtn">Regenerate</button>
+      </div>
+    </div>`;
+        const regenBtn = document.getElementById('regenBtn');
+    if (regenBtn) regenBtn.onclick = () => analyzeLogWithAI(logMessage);
+  } catch(e) { body.innerHTML = `AI analysis failed: ${e.message}`; }
+}
+window.analyzePageLogs = async function(){
+  const rows=[...document.querySelectorAll('#logTableBody tr td:nth-child(4)')].map(td=>td.innerText).filter(Boolean).slice(0,20);
+  if(!rows.length){showAlert('No logs available for AI analysis');return;}
+  await analyzeLogWithAI(rows[0]);
+};
