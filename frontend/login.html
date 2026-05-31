@@ -6,7 +6,8 @@
   <title>LogLytics — Login</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-  <script>if(localStorage.getItem('ll_theme')==='light')document.documentElement.classList.add('light')</script>
+ <script src="apiConfig.js"></script>
+<script>if(localStorage.getItem('ll_theme')==='light')document.documentElement.classList.add('light')</script>
   <style>
     :root{
       --bg-deep:#080c14;--bg-card:rgba(255,255,255,0.05);
@@ -196,7 +197,7 @@
 </div>
 
 <script>
-const API='http://localhost:5000/api';
+const API=window.LOGANALYSER_API_BASE;
 
 // Redirect if already logged in
 if(localStorage.getItem('ll_token')){
@@ -251,7 +252,7 @@ async function doLogin(){
     showAlert('Login successful! Redirecting…','success');
     setTimeout(()=>location.replace('index.html'),800);
   }catch(e){
-    showAlert('Cannot reach backend — make sure your server is running on port 5000');
+    showAlert('Cannot reach backend — check your backend URL in Settings or Render');
   }finally{
     setLoading(false);
   }

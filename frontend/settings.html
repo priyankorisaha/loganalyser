@@ -259,9 +259,9 @@
           <div class="settings-body">
             <div class="setting-row">
               <div class="setting-label">API Base URL</div>
-              <div class="setting-desc">Your Express server address (default: localhost:5000)</div>
+              <div class="setting-desc">Your Express server address (default: Render backend)</div>
               <div class="setting-input-row">
-                <input type="text" class="setting-input" id="apiUrl" placeholder="http://localhost:5000/api" />
+                <div class="setting-desc">Your Express server address (default: Render backend)</div>
                 <button class="test-btn" id="testBtn">Test</button>
               </div>
               <span class="status-dot status-idle" id="connStatus">Not tested</span>
@@ -390,7 +390,7 @@
               <div class="setting-label">Engine Command</div>
               <div class="setting-desc">Run your compiled binary against a log file</div>
               <input type="text" class="setting-input" readonly
-                value="./log_engine sample_logs.log http://localhost:5000/api/logs" />
+                value="./log_engine sample_logs.log https://loganalyser-backend.onrender.com/api/logs" />
             </div>
             <div class="setting-row">
               <div class="setting-label">Supported Formats</div>
@@ -453,10 +453,11 @@
     </div>
   </main>
 
-  <script src="theme.js"></script>
+  <script src="apiConfig.js"></script>
+<script src="theme.js"></script>
   <script>
     const DEFAULTS = {
-      apiUrl: 'http://localhost:5000/api',
+     apiUrl: window.LOGANALYSER_DEFAULT_API_BASE || 'https://loganalyser-backend.onrender.com/api',
       threshold: 10,
       warnThreshold: 25,
       autoRefresh: false,
@@ -485,7 +486,7 @@
 
     function save() {
       const s = {
-        apiUrl:          document.getElementById('apiUrl').value,
+        apiUrl:          document.getElementById('apiUrl').value.replace(/\/+$/, ''),
         threshold:       parseInt(document.getElementById('thresholdRange').value),
         warnThreshold:   parseInt(document.getElementById('warnThresholdRange').value),
         autoRefresh:     document.getElementById('autoRefresh').checked,
@@ -497,6 +498,7 @@
       };
       localStorage.setItem('ll_settings', JSON.stringify(s));
       localStorage.setItem('ll_threshold', s.threshold); // used by alerts.html
+       window.LOGANALYSER_API_BASE = s.apiUrl;
       const msg = document.getElementById('saveMsg');
       msg.classList.add('show');
       setTimeout(() => msg.classList.remove('show'), 2500);
@@ -505,6 +507,7 @@
     function reset() {
       localStorage.removeItem('ll_settings');
       localStorage.removeItem('ll_threshold');
+    window.LOGANALYSER_API_BASE = DEFAULTS.apiUrl;
       load();
     }
 

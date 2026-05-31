@@ -55,7 +55,13 @@ function logout() {
   const _fetch = window.fetch.bind(window);
   window.fetch = function(url, opts = {}) {
     const token = localStorage.getItem('ll_token');
-    if (token && typeof url === 'string' && url.includes('localhost:5000')) {
+     const apiBase = window.LOGANALYSER_API_BASE || '';
+    const shouldAttachToken = token && typeof url === 'string' && (
+      url.startsWith(apiBase) ||
+      url.includes('loganalyser-backend.onrender.com') ||
+      url.includes('localhost:5000')
+    );
+    if (shouldAttachToken) {
       opts.headers = {
         ...opts.headers,
         'Authorization': 'Bearer ' + token,

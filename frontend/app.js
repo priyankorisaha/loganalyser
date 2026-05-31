@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = window.LOGANALYSER_API_BASE || 'https://loganalyser-backend.onrender.com/api'
 
 // ── DOM refs ──────────────────────────────────────────────────
 const typeFilter  = document.getElementById('typeFilter');

@@ -6,6 +6,7 @@
   <title>LogLytics — Register</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="apiConfig.js"></script>
   <script>if(localStorage.getItem('ll_theme')==='light')document.documentElement.classList.add('light')</script>
   <style>
     :root{
@@ -211,7 +212,7 @@
 </div>
 
 <script>
-const API='http://localhost:5000/api';
+const API=window.LOGANALYSER_API_BASE;
 
 if(localStorage.getItem('ll_token')){
   try{const u=JSON.parse(localStorage.getItem('ll_user')||'{}');if(u.id)location.replace('index.html');}catch(_){}

@@ -257,9 +257,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="apiConfig.js"></script>
 <script src="theme.js"></script>
 <script>
-const API='http://localhost:5000/api';
+const API=window.LOGANALYSER_API_BASE;
 let cachedData=null;
 let selectedFormat='csv';
 let barChart,pieChart;
@@ -502,7 +503,7 @@ function dl(blob,name){
   setTimeout(()=>URL.revokeObjectURL(a.href),3000);
 }
 window.analyzePageLogs = async function(){
-  const token=localStorage.getItem('token');
+  const token=localStorage.getItem('ll_token');
   const headers={'Content-Type':'application/json'}; if(token) headers.Authorization=`Bearer ${token}`;
   const logs=(cachedData?.logs||[]).map(l=>l.message).slice(0,50);
   if(!logs.length)return;
