@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LogLytics - Incidents</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .page-title{font-size:19px;font-weight:700;margin-bottom:2px}
+    .page-sub{font-size:12.5px;color:var(--text-secondary);margin-bottom:0}
+    .incident-topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap}
+    .incident-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .inc-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;border:1px solid var(--border)}
+    .inc-btn svg{width:14px;height:14px}
+    .inc-btn.primary{background:var(--accent-blue);border-color:var(--accent-blue);color:white}
+    .inc-btn.primary:hover{opacity:.86}
+    .inc-btn.secondary{background:transparent;color:var(--text-secondary)}
+    .inc-btn.secondary:hover{border-color:var(--border-bright);color:var(--text-primary)}
+    .algo-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:7px;background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.18);color:var(--accent-blue);font-size:11px;font-family:'Space Mono',monospace}
+
+    .filters-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+    .filters-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:end}
+    .filter-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+    .filter-field label{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);font-weight:700}
+    .filter-field input,.filter-field select{width:100%;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:12px;font-family:'DM Sans',sans-serif;outline:none}
+    .filter-field input:focus,.filter-field select:focus{border-color:var(--accent-blue)}
+    .filter-field select option{background:#0f1520}
+    body.light .filter-field select option{background:#fff;color:#0f1520}
+    .filter-span{grid-column:span 2}
+
+    .incidents-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:14px;align-items:start}
+    .details-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+    .panel-pad{padding:14px 18px}
+    .incident-table tr{cursor:pointer}
+    .incident-table tr.selected{background:rgba(79,142,247,.08)}
+    .severity-pill,.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:5px;font-size:10.5px;font-weight:800;letter-spacing:.5px;border:1px solid transparent}
+    .sev-critical{background:rgba(239,68,68,.13);color:var(--accent-red);border-color:rgba(239,68,68,.25)}
+    .sev-error{background:rgba(249,115,22,.13);color:var(--accent-orange);border-color:rgba(249,115,22,.25)}
+    .sev-warning{background:rgba(245,158,11,.12);color:var(--accent-yellow);border-color:rgba(245,158,11,.24)}
+    .st-active{background:rgba(239,68,68,.1);color:var(--accent-red);border-color:rgba(239,68,68,.22)}
+    .st-monitoring{background:rgba(245,158,11,.1);color:var(--accent-yellow);border-color:rgba(245,158,11,.22)}
+    .st-resolved{background:rgba(34,197,94,.1);color:var(--accent-green);border-color:rgba(34,197,94,.22)}
+
+    .detail-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:12px}
+    .kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .kv{padding:10px;border:1px solid var(--border);border-radius:9px;background:rgba(255,255,255,.025)}
+    .kv-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:5px}
+    .kv-value{font-size:13px;font-weight:700;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .services-list{display:flex;gap:6px;flex-wrap:wrap}
+    .service-chip{padding:4px 8px;border-radius:6px;background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.16);color:var(--accent-blue);font-size:11px;font-family:'Space Mono',monospace}
+
+    .flow-wrap{padding:16px 18px 18px;overflow-x:auto}
+    .flow-chain{display:flex;align-items:center;gap:10px;min-height:98px}
+    .flow-node{min-width:150px;max-width:190px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.035);padding:12px;text-align:center;position:relative}
+    .flow-node.root{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.06)}
+    .flow-node-name{font-size:12.5px;font-weight:800;color:var(--text-primary);line-height:1.35}
+    .flow-node-sub{font-size:10.5px;color:var(--text-dim);margin-top:4px;font-family:'Space Mono',monospace}
+    .flow-edge{display:flex;align-items:center;color:var(--accent-blue);flex-shrink:0}
+    .flow-edge svg{width:32px;height:18px}
+
+    .timeline{display:flex;flex-direction:column;padding:4px 18px 16px}
+    .timeline-item{display:grid;grid-template-columns:86px 14px 1fr;gap:10px;position:relative;padding:9px 0}
+    .timeline-item::before{content:'';position:absolute;left:92px;top:24px;bottom:-8px;width:1px;background:var(--border)}
+    .timeline-item:last-child::before{display:none}
+    .tl-time{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);white-space:nowrap}
+    .tl-dot{width:9px;height:9px;border-radius:50%;margin-top:3px;background:var(--accent-blue);box-shadow:0 0 0 3px rgba(79,142,247,.12)}
+    .tl-body{min-width:0}
+    .tl-msg{font-size:12.5px;color:var(--text-primary);line-height:1.4}
+    .tl-meta{font-size:11px;color:var(--text-dim);margin-top:3px}
+
+    .impact-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 18px 18px}
+    .impact-card{border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.025);padding:12px}
+    .impact-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:6px}
+    .impact-value{font-family:'Space Mono',monospace;font-size:22px;font-weight:800;color:var(--text-primary)}
+    .manual-panel{margin-top:14px}
+    .manual-area{width:100%;min-height:130px;resize:vertical;padding:12px 14px;font-family:'Space Mono',monospace;font-size:12px;line-height:1.7;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:9px;color:var(--text-primary);outline:none}
+    .manual-area:focus{border-color:var(--accent-blue)}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:44px 20px;color:var(--text-dim);text-align:center}
+    .empty-state svg{width:32px;height:32px;opacity:.4}
+    .empty-title{font-size:14px;font-weight:700;color:var(--text-secondary)}
+    .empty-sub{font-size:12px;line-height:1.6;max-width:340px}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--accent-blue);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:1180px){.filters-grid{grid-template-columns:repeat(3,1fr)}.filter-span{grid-column:span 1}.incidents-grid,.details-grid{grid-template-columns:1fr}}
+    @media(max-width:720px){.filters-grid,.stat-cards,.impact-grid{grid-template-columns:1fr}.kv-grid{grid-template-columns:1fr}.flow-chain{flex-direction:column;align-items:stretch}.flow-edge{justify-content:center;transform:rotate(90deg)}}
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo"><svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg></div>
+  <nav class="sidebar-nav">
+    <div class="nav-icon" title="Dashboard" onclick="location.href='index.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+    <div class="nav-icon" title="Explore" onclick="location.href='explore.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
+    <div class="nav-icon" title="Alerts" onclick="location.href='alerts.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+    <div class="nav-icon" title="Reports" onclick="location.href='reports.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+    <div class="nav-icon active" title="Incidents"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="6" cy="7" r="3"/><circle cx="18" cy="7" r="3"/><circle cx="12" cy="18" r="3"/><path d="M8.5 9.5 11 15"/><path d="M15.5 9.5 13 15"/><path d="M9 7h6"/></svg></div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="nav-icon" title="Settings" onclick="location.href='settings.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+  </div>
+</aside>
+
+<header class="topbar">
+  <div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm13 0a4 4 0 100 8 4 4 0 000-8z"/></svg></div>LogLytics</div>
+  <nav class="topbar-nav">
+    <a href="index.html">Dashboard</a>
+    <a href="explore.html">Explore</a>
+    <a href="alerts.html">Alerts</a>
+    <a href="reports.html">Reports</a>
+    <a href="incidents.html" class="active">Incidents</a>
+    <a href="settings.html">Settings</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="theme-toggle" id="themeToggle" title="Toggle theme">
+      <svg class="icon-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </div>
+    <div class="notif-btn" onclick="location.href='alerts.html'"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-dot"></span></div>
+    <div class="user-chip" onclick="logout()" style="cursor:pointer" title="Logout"><div class="avatar">JD</div><div class="user-info"><div class="user-name">Jane D.</div><div class="user-role">User</div></div></div>
+  </div>
+</header>
+
+<main class="main">
+  <div class="content">
+    <div class="incident-topbar">
+      <div>
+        <div class="page-title">Incidents</div>
+        <div class="page-sub">Algorithmic incident correlation from uploaded logs using hash maps, service graphs, queues, BFS and DFS.</div>
+      </div>
+      <div class="incident-actions">
+        <span class="algo-chip">NO AI / NO ML</span>
+        <button class="inc-btn secondary" onclick="insertIncidentSample()">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          Sample
+        </button>
+        <button class="inc-btn primary" onclick="loadAndAnalyze()">
+          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Analyze Logs
+        </button>
+      </div>
+    </div>
+
+    <div class="filters-panel">
+      <div class="filters-grid">
+        <div class="filter-field">
+          <label>Severity</label>
+          <select id="severityFilter"><option value="">All</option><option>CRITICAL</option><option>ERROR</option><option>WARNING</option></select>
+        </div>
+        <div class="filter-field">
+          <label>Service</label>
+          <select id="serviceFilter"><option value="">All</option></select>
+        </div>
+        <div class="filter-field">
+          <label>Status</label>
+          <select id="statusFilter"><option value="">All</option><option>Active</option><option>Monitoring</option><option>Resolved</option></select>
+        </div>
+        <div class="filter-field">
+          <label>From</label>
+          <input type="datetime-local" id="fromFilter"/>
+        </div>
+        <div class="filter-field">
+          <label>To</label>
+          <input type="datetime-local" id="toFilter"/>
+        </div>
+        <div class="filter-field">
+          <label>Window Minutes</label>
+          <input type="number" id="windowInput" min="1" max="120" value="5"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-cards">
+      <div class="stat-card"><div class="stat-header"><span class="stat-label">Total Incidents</span><span class="stat-badge badge-blue"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></span></div><div class="stat-value" id="totalIncidents">0</div><div class="stat-meta"><span class="stat-sub">correlated clusters</span></div></div>
+      <div class="stat-card"><div class="stat-header"><span class="stat-label">Critical Incidents</span><span class="stat-badge badge-red"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg></span></div><div class="stat-value" id="criticalIncidents">0</div><div class="stat-meta"><span class="stat-sub">contains critical events</span></div></div>
+      <div class="stat-card"><div class="stat-header"><span class="stat-label">Resolved Incidents</span><span class="stat-badge badge-green"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span></div><div class="stat-value" id="resolvedIncidents">0</div><div class="stat-meta"><span class="stat-sub">recovery observed</span></div></div>
+      <div class="stat-card"><div class="stat-header"><span class="stat-label">Active Incidents</span><span class="stat-badge badge-yellow"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span></div><div class="stat-value" id="activeIncidents">0</div><div class="stat-meta"><span class="stat-sub">open or monitoring</span></div></div>
+    </div>
+
+    <div class="incidents-grid">
+      <div class="panel log-panel">
+        <div class="panel-header"><span class="panel-title">Incident Table</span></div>
+        <div class="table-wrap">
+          <table class="incident-table">
+            <thead><tr><th>Incident ID</th><th>Root Cause</th><th>Severity</th><th>Affected Services Count</th><th>First Occurrence</th><th>Status</th></tr></thead>
+            <tbody id="incidentTbody"><tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-dim)">Click Analyze Logs to build incident clusters</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Incident Details</span></div>
+        <div class="panel-pad" id="detailsPanel">
+          <div class="empty-state">
+            <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 17h.01"/></svg>
+            <div class="empty-title">No incident selected</div>
+            <div class="empty-sub">Select an incident from the table to inspect root cause, service impact, traversal path and status.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-grid">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Failure Propagation Visualization</span></div>
+        <div class="flow-wrap"><div class="flow-chain" id="flowChain"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Incident Timeline</span></div>
+        <div class="timeline" id="incidentTimeline"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <div class="panel-header"><span class="panel-title">Impact Analysis</span></div>
+      <div class="impact-grid" id="impactGrid">
+        <div class="impact-card"><div class="impact-label">Services Impacted</div><div class="impact-value">0</div></div>
+        <div class="impact-card"><div class="impact-label">Error Count</div><div class="impact-value">0</div></div>
+        <div class="impact-card"><div class="impact-label">Warning Count</div><div class="impact-value">0</div></div>
+        <div class="impact-card"><div class="impact-label">Critical Count</div><div class="impact-value">0</div></div>
+      </div>
+    </div>
+
+    <div class="panel manual-panel">
+      <div class="panel-header"><span class="panel-title">Manual Log Input</span></div>
+      <div class="panel-pad">
+        <textarea class="manual-area" id="manualLogs" placeholder="[2026-06-07T10:00:01Z] CRITICAL database - Database timeout&#10;[2026-06-07T10:00:03Z] ERROR auth - Authentication failed"></textarea>
+        <div class="uw-actions">
+          <button class="uw-btn-primary" onclick="analyzeManualLogs()">Analyze Manual Logs</button>
+          <button class="uw-btn-secondary" onclick="document.getElementById('manualLogs').value=''">Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="apiConfig.js"></script>
+<script src="theme.js"></script>
+<script>
+const API = window.LOGANALYSER_API_BASE;
+let rawLogs = [];
+let incidents = [];
+let selectedIncidentId = null;
+
+const dependencyGraph = {
+  database: ['auth', 'payments', 'orders', 'search'],
+  auth: ['api', 'frontend', 'payments'],
+  payments: ['orders', 'billing', 'notifications'],
+  orders: ['inventory', 'shipping', 'notifications'],
+  api: ['frontend', 'mobile'],
+  cache: ['api', 'auth'],
+  gateway: ['api', 'payments'],
+  network: ['gateway', 'database', 'api'],
+  inventory: ['orders'],
+  shipping: ['notifications'],
+  billing: ['notifications'],
+  frontend: [],
+  mobile: [],
+  notifications: [],
+  search: []
+};
+
+function esc(s){return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function fmtTime(v){const d=new Date(v);return Number.isNaN(d.getTime())?String(v || '-'):d.toLocaleString()}
+function timeMs(v){const d=new Date(v);return Number.isNaN(d.getTime())?Date.now():d.getTime()}
+function shortTime(v){const d=new Date(v);return Number.isNaN(d.getTime())?String(v || '-'):d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+function severityClass(s){return s==='CRITICAL'?'sev-critical':s==='ERROR'?'sev-error':'sev-warning'}
+function statusClass(s){return s==='Resolved'?'st-resolved':s==='Monitoring'?'st-monitoring':'st-active'}
+function severityBadge(s){return `<span class="severity-pill ${severityClass(s)}">${esc(s)}</span>`}
+function statusBadge(s){return `<span class="status-pill ${statusClass(s)}">${esc(s)}</span>`}
+
+function classify(text) {
+  const u = String(text || '').toUpperCase();
+  if (/CRITICAL|FATAL|SEVERE|P0|OUTAGE/.test(u)) return 'CRITICAL';
+  if (/ERROR|ERR\b|EXCEPTION|FAILED|FAIL|TIMEOUT|REFUSED|UNAVAILABLE/.test(u)) return 'ERROR';
+  if (/WARN|WARNING|RETRY|DEGRADED|SLOW|NOTICE/.test(u)) return 'WARNING';
+  return 'INFO';
+}
+
+function parseLogLine(line) {
+  if (!line || !line.trim()) return null;
+  const trimmed = line.trim();
+  if (trimmed.startsWith('{')) {
+    try {
+      const j = JSON.parse(trimmed);
+      const message = j.message || j.msg || trimmed;
+      const type = classify(j.type || j.level || j.severity || message);
+      return { timestamp: j.timestamp || j.time || j.ts || new Date().toISOString(), type, source: normalizeService(j.source || j.service || j.module || message), message, rawLine: trimmed };
+    } catch (_) {}
+  }
+  let m = trimmed.match(/^\[(.*?)\]\s+(CRITICAL|ERROR|WARNING|WARN|FATAL|INFO)\s+(?:-|:)?\s*(?:(\w[\w.-]*)\s+(?:-|:)\s*)?(.+)$/i);
+  if (m) return { timestamp:m[1], type:classify(m[2]), source:normalizeService(m[3] || m[4]), message:m[4], rawLine:trimmed };
+  m = trimmed.match(/^(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:?\d{2})?)\s+(CRITICAL|ERROR|WARNING|WARN|FATAL|INFO)\s+(?:(\w[\w.-]*)\s+)?(.+)$/i);
+  if (m) return { timestamp:m[1], type:classify(m[2]), source:normalizeService(m[3] || m[4]), message:m[4], rawLine:trimmed };
+  m = trimmed.match(/^(CRITICAL|ERROR|WARNING|WARN|FATAL|INFO)\s*:\s*(.+)$/i);
+  if (m) return { timestamp:new Date().toISOString(), type:classify(m[1]), source:normalizeService(m[2]), message:m[2], rawLine:trimmed };
+  return { timestamp:new Date().toISOString(), type:classify(trimmed), source:normalizeService(trimmed), message:trimmed, rawLine:trimmed };
+}
+
+function normalizeLog(log) {
+  const message = log.message || log.msg || log.rawLine || '';
+  return {
+    timestamp: log.timestamp || log.time || log.createdAt || new Date().toISOString(),
+    type: classify(log.type || log.level || log.severity || message),
+    source: normalizeService(log.source || log.service || log.module || message),
+    message,
+    rawLine: log.rawLine || message
+  };
+}
+
+function normalizeService(input) {
+  const s = String(input || '').toLowerCase();
+  const rules = [
+    ['database', /db|database|mongo|mysql|postgres|sql|redis|cache/],
+    ['auth', /auth|login|token|session|oauth|identity/],
+    ['payments', /payment|pay|checkout|gateway|stripe|billing/],
+    ['orders', /order|cart|purchase/],
+    ['inventory', /inventory|stock|sku/],
+    ['shipping', /shipping|shipment|delivery/],
+    ['notifications', /notification|email|sms|push/],
+    ['gateway', /gateway|proxy|nginx|load balancer/],
+    ['network', /network|dns|tcp|socket|connection refused/],
+    ['api', /api|endpoint|controller|request|response/],
+    ['frontend', /frontend|client|browser|ui/],
+    ['search', /search|index|elastic|solr/]
+  ];
+  const found = rules.find(([, re]) => re.test(s));
+  return found ? found[0] : 'api';
+}
+
+function normalizeMessage(message) {
+  return String(message || '')
+    .toLowerCase()
+    .replace(/\b\d{1,3}(?:\.\d{1,3}){3}\b/g, '{ip}')
+    .replace(/[a-f0-9]{8,}/g, '{id}')
+    .replace(/\d+/g, '{n}')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function bfsAffectedServices(root) {
+  const queue = [root];
+  const visited = new Set([root]);
+  const order = [];
+  while (queue.length) {
+    const svc = queue.shift();
+    order.push(svc);
+    (dependencyGraph[svc] || []).forEach(next => {
+      if (!visited.has(next)) {
+        visited.add(next);
+        queue.push(next);
+      }
+    });
+  }
+  return order;
+}
+
+function dfsConnectedServices(seed, services) {
+  const wanted = new Set(services);
+  const visited = new Set();
+  function visit(svc) {
+    if (visited.has(svc)) return;
+    visited.add(svc);
+    (dependencyGraph[svc] || []).forEach(next => { if (wanted.has(next)) visit(next); });
+    Object.entries(dependencyGraph).forEach(([parent, children]) => {
+      if (children.includes(svc) && wanted.has(parent)) visit(parent);
+    });
+  }
+  visit(seed);
+  return [...visited];
+}
+
+function areServicesRelated(a, b) {
+  if (a === b) return true;
+  const aReach = bfsAffectedServices(a);
+  const bReach = bfsAffectedServices(b);
+  return aReach.includes(b) || bReach.includes(a) || aReach.some(svc => bReach.includes(svc));
+}
+
+function inferStatus(events) {
+  const text = events.map(e => e.message).join(' ').toLowerCase();
+  if (/resolved|recovered|healthy|restored|back online|success/.test(text)) return 'Resolved';
+  const last = timeMs(events[events.length - 1]?.timestamp);
+  return Date.now() - last < 30 * 60 * 1000 ? 'Active' : 'Monitoring';
+}
+
+function correlate(logs) {
+  const windowMs = Math.max(1, parseInt(document.getElementById('windowInput').value) || 5) * 60 * 1000;
+  const events = logs.map(normalizeLog)
+    .filter(e => ['ERROR','WARNING','CRITICAL'].includes(e.type))
+    .sort((a,b) => timeMs(a.timestamp) - timeMs(b.timestamp));
+
+  const timeBuckets = new Map();
+  events.forEach(event => {
+    const bucketKey = Math.floor(timeMs(event.timestamp) / windowMs);
+    if (!timeBuckets.has(bucketKey)) timeBuckets.set(bucketKey, []);
+    timeBuckets.get(bucketKey).push(event);
+  });
+
+  const candidateClusters = [];
+  timeBuckets.forEach(bucketEvents => {
+    const bucketClusters = [];
+    bucketEvents.forEach(event => {
+      let cluster = bucketClusters.find(item => {
+        const last = item.events[item.events.length - 1];
+        return timeMs(event.timestamp) - timeMs(last.timestamp) <= windowMs
+          && [...item.serviceMap.keys()].some(service => areServicesRelated(service, event.source));
+      });
+      if (!cluster) {
+        cluster = { events: [], serviceMap: new Map(), patternMap: new Map() };
+        bucketClusters.push(cluster);
+      }
+      cluster.events.push(event);
+      cluster.serviceMap.set(event.source, (cluster.serviceMap.get(event.source) || 0) + 1);
+      const p = normalizeMessage(event.message);
+      cluster.patternMap.set(p, (cluster.patternMap.get(p) || 0) + 1);
+    });
+    candidateClusters.push(...bucketClusters);
+  });
+
+  return candidateClusters.map((cluster, index) => {
+    const clusterEvents = cluster.events;
+    const serviceMap = new Map();
+    const patternMap = new Map();
+    clusterEvents.forEach(event => {
+      serviceMap.set(event.source, (serviceMap.get(event.source) || 0) + 1);
+      const p = normalizeMessage(event.message);
+      patternMap.set(p, (patternMap.get(p) || 0) + 1);
+    });
+
+    const rootEvent = [...clusterEvents].sort((a,b) => {
+      const rank = {CRITICAL:3, ERROR:2, WARNING:1};
+      return rank[b.type] - rank[a.type] || timeMs(a.timestamp) - timeMs(b.timestamp);
+    })[0];
+    const services = [...serviceMap.keys()];
+    const graphReach = bfsAffectedServices(rootEvent.source);
+    const connected = dfsConnectedServices(rootEvent.source, services);
+    const affected = [...new Set([...services, ...graphReach.slice(0, Math.min(6, graphReach.length)), ...connected])];
+    const critical = clusterEvents.filter(e => e.type === 'CRITICAL').length;
+    const errors = clusterEvents.filter(e => e.type === 'ERROR').length;
+    const warnings = clusterEvents.filter(e => e.type === 'WARNING').length;
+    const severity = critical ? 'CRITICAL' : errors ? 'ERROR' : 'WARNING';
+    const impactScore = Math.min(100, affected.length * 12 + errors * 8 + warnings * 4 + critical * 18);
+
+    return {
+      id: `INC-${String(index + 1).padStart(4, '0')}`,
+      rootCause: rootEvent.message,
+      rootEvent,
+      severity,
+      firstOccurrence: clusterEvents[0].timestamp,
+      status: inferStatus(clusterEvents),
+      events: clusterEvents,
+      affectedServices: affected,
+      propagation: graphReach.slice(0, Math.max(1, Math.min(5, affected.length))),
+      impactScore,
+      counts: { critical, errors, warnings }
+    };
+  }).sort((a,b) => timeMs(b.firstOccurrence) - timeMs(a.firstOccurrence));
+}
+
+function applyFilters() {
+  const sev = document.getElementById('severityFilter').value;
+  const svc = document.getElementById('serviceFilter').value;
+  const status = document.getElementById('statusFilter').value;
+  const from = document.getElementById('fromFilter').value ? new Date(document.getElementById('fromFilter').value).getTime() : null;
+  const to = document.getElementById('toFilter').value ? new Date(document.getElementById('toFilter').value).getTime() : null;
+  return incidents.filter(inc => {
+    const t = timeMs(inc.firstOccurrence);
+    return (!sev || inc.severity === sev)
+      && (!svc || inc.affectedServices.includes(svc))
+      && (!status || inc.status === status)
+      && (!from || t >= from)
+      && (!to || t <= to);
+  });
+}
+
+function renderSummary(data) {
+  document.getElementById('totalIncidents').textContent = data.length;
+  document.getElementById('criticalIncidents').textContent = data.filter(i => i.severity === 'CRITICAL').length;
+  document.getElementById('resolvedIncidents').textContent = data.filter(i => i.status === 'Resolved').length;
+  document.getElementById('activeIncidents').textContent = data.filter(i => i.status !== 'Resolved').length;
+}
+
+function renderServiceFilter() {
+  const services = [...new Set(incidents.flatMap(i => i.affectedServices))].sort();
+  const current = document.getElementById('serviceFilter').value;
+  document.getElementById('serviceFilter').innerHTML = '<option value="">All</option>' + services.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  document.getElementById('serviceFilter').value = services.includes(current) ? current : '';
+}
+
+function renderTable() {
+  const data = applyFilters();
+  renderSummary(data);
+  const body = document.getElementById('incidentTbody');
+  if (!data.length) {
+    body.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-title">No incidents found</div><div class="empty-sub">Adjust filters or analyze a larger uploaded log set.</div></div></td></tr>`;
+    renderSelected(null);
+    return;
+  }
+  body.innerHTML = data.map(inc => `
+    <tr class="${inc.id === selectedIncidentId ? 'selected' : ''}" onclick="selectIncident('${inc.id}')">
+      <td style="font-family:'Space Mono',monospace;color:var(--accent-blue);font-weight:700">${inc.id}</td>
+      <td class="msg" title="${esc(inc.rootCause)}">${esc(inc.rootCause)}</td>
+      <td>${severityBadge(inc.severity)}</td>
+      <td>${inc.affectedServices.length}</td>
+      <td class="ts">${esc(fmtTime(inc.firstOccurrence))}</td>
+      <td>${statusBadge(inc.status)}</td>
+    </tr>`).join('');
+  if (!data.some(i => i.id === selectedIncidentId)) selectedIncidentId = data[0].id;
+  renderSelected(incidents.find(i => i.id === selectedIncidentId));
+}
+
+function selectIncident(id) {
+  selectedIncidentId = id;
+  renderTable();
+}
+
+function renderSelected(inc) {
+  if (!inc) {
+    document.getElementById('detailsPanel').innerHTML = `<div class="empty-state"><div class="empty-title">No incident selected</div><div class="empty-sub">Select an incident from the table.</div></div>`;
+    document.getElementById('flowChain').innerHTML = '';
+    document.getElementById('incidentTimeline').innerHTML = '';
+    document.getElementById('impactGrid').innerHTML = impactCards();
+    return;
+  }
+  document.getElementById('detailsPanel').innerHTML = `
+    <div class="detail-title">${inc.id}</div>
+    <div class="kv-grid">
+      <div class="kv"><div class="kv-label">Root Cause Event</div><div class="kv-value" title="${esc(inc.rootCause)}">${esc(inc.rootCause)}</div></div>
+      <div class="kv"><div class="kv-label">Severity Level</div><div class="kv-value">${severityBadge(inc.severity)}</div></div>
+      <div class="kv"><div class="kv-label">Impact Score</div><div class="kv-value">${inc.impactScore}/100</div></div>
+      <div class="kv"><div class="kv-label">Status</div><div class="kv-value">${statusBadge(inc.status)}</div></div>
+    </div>
+    <div class="detail-title" style="margin-top:14px">Affected Services</div>
+    <div class="services-list">${inc.affectedServices.map(s => `<span class="service-chip">${esc(s)}</span>`).join('')}</div>`;
+
+  document.getElementById('flowChain').innerHTML = inc.propagation.map((svc, idx) => `
+    ${idx ? `<div class="flow-edge"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 40 20"><path d="M2 10h32"/><path d="m28 4 6 6-6 6"/></svg></div>` : ''}
+    <div class="flow-node ${idx === 0 ? 'root' : ''}">
+      <div class="flow-node-name">${esc(serviceLabel(svc))}</div>
+      <div class="flow-node-sub">${idx === 0 ? 'root' : 'dependent'}</div>
+    </div>`).join('');
+
+  document.getElementById('incidentTimeline').innerHTML = inc.events.map(event => `
+    <div class="timeline-item">
+      <div class="tl-time">${esc(shortTime(event.timestamp))}</div>
+      <div class="tl-dot" style="background:${event.type === 'CRITICAL' ? 'var(--accent-red)' : event.type === 'ERROR' ? 'var(--accent-orange)' : 'var(--accent-yellow)'}"></div>
+      <div class="tl-body">
+        <div class="tl-msg">${esc(event.message)}</div>
+        <div class="tl-meta">${esc(event.type)} / ${esc(serviceLabel(event.source))}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('impactGrid').innerHTML = impactCards(inc);
+}
+
+function serviceLabel(svc) {
+  return String(svc || 'unknown').split('-').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+}
+
+function impactCards(inc) {
+  const services = inc?.affectedServices.length || 0;
+  const errors = inc?.counts.errors || 0;
+  const warnings = inc?.counts.warnings || 0;
+  const critical = inc?.counts.critical || 0;
+  const blast = inc?.impactScore || 0;
+  return `
+    <div class="impact-card"><div class="impact-label">Services Impacted</div><div class="impact-value">${services}</div></div>
+    <div class="impact-card"><div class="impact-label">Error Count</div><div class="impact-value" style="color:var(--accent-orange)">${errors}</div></div>
+    <div class="impact-card"><div class="impact-label">Warning Count</div><div class="impact-value" style="color:var(--accent-yellow)">${warnings}</div></div>
+    <div class="impact-card"><div class="impact-label">Critical Count</div><div class="impact-value" style="color:var(--accent-red)">${critical}</div></div>
+    <div class="impact-card" style="grid-column:1 / -1"><div class="impact-label">Blast Radius Score</div><div class="impact-value" style="color:var(--accent-blue)">${blast}/100</div></div>`;
+}
+
+async function loadAndAnalyze() {
+  document.getElementById('incidentTbody').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:36px;color:var(--text-dim)"><span class="spinner"></span>Loading uploaded logs and running correlation...</td></tr>`;
+  try {
+    const res = await fetch(`${API}/logs`);
+    const data = await res.json();
+    rawLogs = data.logs || data.exported || data.exportedLogs || [];
+    if (!rawLogs.length && Array.isArray(data)) rawLogs = data;
+  } catch (e) {
+    rawLogs = [];
+  }
+  if (!rawLogs.length && document.getElementById('manualLogs').value.trim()) {
+    rawLogs = parseManualText();
+  }
+  runCorrelation();
+}
+
+function runCorrelation() {
+  incidents = correlate(rawLogs);
+  selectedIncidentId = incidents[0]?.id || null;
+  renderServiceFilter();
+  renderTable();
+}
+
+function analyzeManualLogs() {
+  rawLogs = parseManualText();
+  runCorrelation();
+}
+
+function parseManualText() {
+  return document.getElementById('manualLogs').value.split(/\r?\n/).map(parseLogLine).filter(Boolean);
+}
+
+function insertIncidentSample() {
+  document.getElementById('manualLogs').value =
+`[2026-06-07T10:00:01Z] CRITICAL database - Database timeout while acquiring connection
+[2026-06-07T10:00:03Z] ERROR auth - Authentication failed because token validation could not reach database
+[2026-06-07T10:00:05Z] WARNING api - Login endpoint degraded after auth retries
+[2026-06-07T10:00:08Z] ERROR payments - Payment authorization failed after auth service timeout
+[2026-06-07T10:00:11Z] ERROR orders - Order creation failed because payment service returned unavailable
+[2026-06-07T10:04:30Z] WARNING notifications - Email delivery delayed for order confirmation
+[2026-06-07T10:30:01Z] ERROR cache - Redis cache unavailable
+[2026-06-07T10:30:04Z] WARNING api - API latency increased after cache miss storm
+[2026-06-07T10:31:20Z] WARNING cache - Cache recovered successfully`;
+  analyzeManualLogs();
+}
+
+['severityFilter','serviceFilter','statusFilter','fromFilter','toFilter','windowInput'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    if (id === 'windowInput' && rawLogs.length) runCorrelation();
+    else renderTable();
+  });
+});
+
+loadAndAnalyze();
+</script>
+
+</body>
+</html>
