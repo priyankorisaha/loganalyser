@@ -10,7 +10,7 @@ try {
     parseAdvancedQuery,
     detectPatterns,
     buildInsights,
-  } = require('../services/logAnalysisService'));
+  } = require('../services/logAnalysisServices'));
 } catch (_) {
   parseAdvancedQuery = () => ({
     text: [],
