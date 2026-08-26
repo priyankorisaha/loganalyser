@@ -272,11 +272,14 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 /* ── Load data from /exports endpoint ── */
 async function load(){
   try{
-    const r=await fetch(`${API}/exports`);
+    const token=localStorage.getItem('ll_token');
+    const headers={}; if(token) headers.Authorization=`Bearer ${token}`;
+
+    const r=await fetch(`${API}/exports`,{headers});
     const d=await r.json();
     cachedData=d;
 
-    const logs=d.logs||[];
+    const logs=d.exported||[];
     const summary=logs.reduce((a,l)=>{a[l.type]=(a[l.type]||0)+1;return a},{ERROR:0,WARNING:0,INFO:0,CRITICAL:0});
     const total=logs.length;
 
@@ -401,7 +404,12 @@ async function doExport(){
   setProgress(20,'Fetching data from backend…');
   let data=cachedData;
   if(!data){
-    try{const r=await fetch(`${API}/exports`);data=await r.json();}
+    try{
+      const token=localStorage.getItem('ll_token');
+      const headers={}; if(token) headers.Authorization=`Bearer ${token}`;
+      const r=await fetch(`${API}/exports`,{headers});
+      data=await r.json();
+    }
     catch(e){
       setProgress(100,'❌ Backend unreachable');
       setTimeout(()=>closeExportModal(),2000);return;
