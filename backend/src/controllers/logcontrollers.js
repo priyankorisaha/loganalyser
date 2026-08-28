@@ -1,8 +1,13 @@
+const path = require('path');
+const os = require('os');
+const fs = require('fs');
+const { execFile } = require('child_process');
+
 const Log = require('../models/logs');
 const User = require('../models/user');
 const { sendAlertEmail } = require('../services/emailServices');
 
-// ── DSA: Query parser (from logAnalysisService) ──────────────
+// ── DSA: Query parser (from logAnalysisServices) ──────────────
 let parseAdvancedQuery, detectPatterns, buildInsights;
 
 try {
@@ -25,6 +30,107 @@ try {
     topSources: [],
     topErrors: [],
     anomalies: [],
+  });
+}
+
+/**
+ * Runs the compiled C++ DSA analysis engine in --analyze-only mode on the given logs.
+ * Returns { patterns, insights } on success, or null on any error/timeout.
+ */
+function runCppAnalysis(logs) {
+  return new Promise((resolve) => {
+    if (!Array.isArray(logs) || logs.length === 0) {
+      return resolve(null);
+    }
+
+    const tempFile = path.join(
+      os.tmpdir(),
+      `logs_${Date.now()}_${Math.random().toString(36).slice(2)}.log`
+    );
+
+    try {
+      const logLines = logs
+        .map((l) =>
+          JSON.stringify({
+            timestamp: l.timestamp || l.createdAt || new Date().toISOString(),
+            level: l.type || 'INFO',
+            message: l.message || '',
+          })
+        )
+        .join('\n');
+
+      fs.writeFileSync(tempFile, logLines, 'utf8');
+    } catch (err) {
+      return resolve(null);
+    }
+
+    const binaryPath = process.env.CPP_ENGINE_PATH || '../../cpp-engine/build/log_engine';
+    let resolvedPath = path.resolve(__dirname, '..', binaryPath);
+
+    if (process.platform === 'win32' && !resolvedPath.endsWith('.exe')) {
+      if (!fs.existsSync(resolvedPath) && fs.existsSync(resolvedPath + '.exe')) {
+        resolvedPath += '.exe';
+      }
+    }
+
+    execFile(
+      resolvedPath,
+      ['--analyze-only', tempFile],
+      { timeout: 5000 },
+      (error, stdout, stderr) => {
+        try {
+          fs.unlinkSync(tempFile);
+        } catch (_) {}
+
+        if (error) {
+          return resolve(null);
+        }
+
+        try {
+          const data = JSON.parse(stdout);
+          const patterns = (data.topErrors || []).map((e) => {
+            const matchingLogs = logs.filter((l) => l.message === e.message);
+            const timestamps = matchingLogs
+              .map((l) => l.timestamp || l.createdAt)
+              .filter(Boolean);
+            const type = matchingLogs[0]?.type || 'ERROR';
+
+            return {
+              pattern: e.message,
+              message: e.message,
+              count: e.count,
+              severity: type,
+              type: type,
+              timestamps: timestamps,
+            };
+          });
+
+          const sourceFreq = new Map();
+          logs.forEach((log) => {
+            const source = (log.source || 'unknown').toLowerCase();
+            sourceFreq.set(source, (sourceFreq.get(source) || 0) + 1);
+          });
+          const topSources = [...sourceFreq.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+
+          const insights = {
+            topSources,
+            topErrors: (data.topErrors || []).map((e) => [e.message, e.count]),
+            anomalies: (data.topErrors || [])
+              .filter((e) => e.count >= 5)
+              .map((e) => ({
+                pattern: e.message,
+                count: e.count,
+              })),
+          };
+
+          resolve({ patterns, insights });
+        } catch (_) {
+          resolve(null);
+        }
+      }
+    );
   });
 }
 
@@ -265,12 +371,22 @@ exports.getLogs = async (req, res) => {
       {}
     );
 
+    const cppData = await runCppAnalysis(logs);
+    let patterns, insights;
+    if (cppData) {
+      patterns = cppData.patterns;
+      insights = cppData.insights;
+    } else {
+      patterns = detectPatterns(logs);
+      insights = buildInsights(logs);
+    }
+
     return res.json({
       total: logs.length,
       summary,
       logs,
-      patterns: detectPatterns(logs),
-      insights: buildInsights(logs),
+      patterns,
+      insights,
     });
 
   } catch (err) {
@@ -284,8 +400,17 @@ exports.getPatterns = async (req, res) => {
   try {
     const query = buildQuery(req.query, req.userId);
     const logs = await Log.find(query).lean();
+    
+    const cppData = await runCppAnalysis(logs);
+    let patterns;
+    if (cppData) {
+      patterns = cppData.patterns;
+    } else {
+      patterns = detectPatterns(logs);
+    }
+
     return res.json({
-      patterns: detectPatterns(logs),
+      patterns,
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });

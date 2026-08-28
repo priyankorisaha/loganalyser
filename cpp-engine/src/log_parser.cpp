@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <iostream>
 #include <numeric>
+#include <new>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -68,19 +69,34 @@ std::string classifyLog(const std::string& text) {
 // Supports 8 formats + universal fallback
 // ══════════════════════════════════════════════
 bool parseLogLine(const std::string& line, ParsedLog& out) {
-  out.rawLine = line;
+  out.rawLine.assign(line);
   out.formatMatched = "FALLBACK";
 
   // 1) JSON  {"timestamp":"…","level":"…","message":"…"}
   if (!line.empty() && line.front() == '{') {
     try {
       auto j = nlohmann::json::parse(line);
-      auto ts  = j.value("timestamp", j.value("time", j.value("ts", "")));
-      auto lvl = j.value("level", j.value("severity", j.value("lvl", "")));
-      auto msg = j.value("message", j.value("msg", line));
+      std::string ts, lvl, msg;
+      
+      // Extract timestamp (try multiple key names)
+      if (j.contains("timestamp")) ts = j["timestamp"].get<std::string>();
+      else if (j.contains("time")) ts = j["time"].get<std::string>();
+      else if (j.contains("ts")) ts = j["ts"].get<std::string>();
+      
+      // Extract level (try multiple key names)
+      if (j.contains("level")) lvl = j["level"].get<std::string>();
+      else if (j.contains("severity")) lvl = j["severity"].get<std::string>();
+      else if (j.contains("lvl")) lvl = j["lvl"].get<std::string>();
+      
+      // Extract message (try multiple key names)
+      if (j.contains("message")) msg = j["message"].get<std::string>();
+      else if (j.contains("msg")) msg = j["msg"].get<std::string>();
+      else msg = std::string(line);
+      
       out.timestamp    = ts.empty() ? currentUTCTimestamp() : ts;
       out.type         = classifyLog(lvl.empty() ? msg : lvl);
-      out.message      = msg;
+      out.message      = std::move(msg);
+      
       out.formatMatched = "JSON_LINE";
       return true;
     } catch (...) {}
@@ -92,7 +108,7 @@ bool parseLogLine(const std::string& line, ParsedLog& out) {
   static const std::regex rBracket(
     R"(^\[(.*?)\]\s+(INFO|WARNING|ERROR|WARN|DEBUG|TRACE|FATAL)\s+-\s+(.+)$)");
   if (std::regex_match(line, m, rBracket)) {
-    out.timestamp = m[1]; out.type = classifyLog(m[2]); out.message = m[3];
+    out.timestamp = m[1].str(); out.type = classifyLog(m[2].str()); out.message = m[3].str();
     out.formatMatched = "BRACKET_LEVEL_DASH"; return true;
   }
 
@@ -101,7 +117,7 @@ bool parseLogLine(const std::string& line, ParsedLog& out) {
   static const std::regex rISO(
     R"(^(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:?\d{2})?)\s+([A-Za-z]+)\s+(.+)$)");
   if (std::regex_match(line, m, rISO)) {
-    out.timestamp = m[1]; out.type = classifyLog(m[2]); out.message = m[3];
+    out.timestamp = m[1].str(); out.type = classifyLog(m[2].str()); out.message = m[3].str();
     out.formatMatched = "ISO_LEVEL_MSG"; return true;
   }
 
@@ -109,7 +125,7 @@ bool parseLogLine(const std::string& line, ParsedLog& out) {
   static const std::regex rLevelColon(R"(^([A-Za-z]+)\s*:\s*(.+)$)");
   if (std::regex_match(line, m, rLevelColon)) {
     out.timestamp = currentUTCTimestamp();
-    out.type      = classifyLog(m[1]); out.message = m[2];
+    out.type      = classifyLog(m[1].str()); out.message = m[2].str();
     out.formatMatched = "LEVEL_COLON_MSG"; return true;
   }
 
@@ -119,7 +135,7 @@ bool parseLogLine(const std::string& line, ParsedLog& out) {
     R"REGEX(^([\S]+)\s+\S+\s+\S+\s+\[([^\]]+)\]\s+"([^\"]+)"\s+(\d{3})\s+\S+.*)REGEX");
   if (std::regex_match(line, m, rApache)) {
     int code = std::stoi(m[4].str());
-    out.timestamp = m[2];
+    out.timestamp = m[2].str();
     out.type      = code >= 500 ? "ERROR" : code >= 400 ? "WARNING" : "INFO";
     out.message   = m[3].str() + " [HTTP " + m[4].str() + "]";
     out.formatMatched = "APACHE_ACCESS"; return true;
@@ -129,7 +145,7 @@ bool parseLogLine(const std::string& line, ParsedLog& out) {
   static const std::regex rSyslog(
     R"(^([A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+\S+\s+\S+:\s+(.+)$)");
   if (std::regex_match(line, m, rSyslog)) {
-    out.timestamp = m[1]; out.type = classifyLog(m[2]); out.message = m[2];
+    out.timestamp = m[1].str(); out.type = classifyLog(m[2].str()); out.message = m[2].str();
     out.formatMatched = "SYSLOG"; return true;
   }
 
@@ -138,7 +154,7 @@ bool parseLogLine(const std::string& line, ParsedLog& out) {
   static const std::regex rLog4j(
     R"(^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}[,.]?\d*)\s+(ERROR|WARN|INFO|DEBUG|TRACE|FATAL)\s+.*?-\s+(.+)$)");
   if (std::regex_match(line, m, rLog4j)) {
-    out.timestamp = m[1]; out.type = classifyLog(m[2]); out.message = m[3];
+    out.timestamp = m[1].str(); out.type = classifyLog(m[2].str()); out.message = m[3].str();
     out.formatMatched = "LOG4J"; return true;
   }
 
@@ -147,14 +163,14 @@ bool parseLogLine(const std::string& line, ParsedLog& out) {
   static const std::regex rWin(
     R"(^(Error|Warning|Information)\s+(\d+/\d+/\d{4}\s+\S+\s+[AP]M)\s+\S+\s+\d+\s+(.+)$)");
   if (std::regex_match(line, m, rWin)) {
-    out.timestamp = m[2]; out.type = classifyLog(m[1]); out.message = m[3];
+    out.timestamp = m[2].str(); out.type = classifyLog(m[1].str()); out.message = m[3].str();
     out.formatMatched = "WINDOWS_EVENT"; return true;
   }
 
   // FALLBACK — classify entire line
   out.timestamp = currentUTCTimestamp();
   out.type      = classifyLog(line);
-  out.message   = line;
+  out.message   = std::string(line);
   return true;
 }
 
@@ -235,7 +251,9 @@ std::vector<std::pair<std::string,int>> FrequencyMap::topN(int n) const {
 // DSA #4  CIRCULAR BUFFER
 // ══════════════════════════════════════════════
 void CircularBuffer::push(const ParsedLog& log) {
-  buf[head] = log;
+  // ParsedLog cannot be copy-assigned, so replace the existing slot in place.
+  buf[head].~ParsedLog();
+  new (&buf[head]) ParsedLog(log);
   head = (head + 1) % capacity;
   if (count < capacity) ++count;
 }
@@ -296,7 +314,7 @@ int TimestampIndex::lowerBound(const std::string& t) const {
   int lo = 0, hi = (int)timestamps.size();
   while (lo < hi) {
     int mid = (lo+hi)/2;
-    if (timestamps[mid] < t) lo = mid+1; else hi = mid;
+    if (timestamps[mid].compare(t) < 0) lo = mid+1; else hi = mid;
   }
   return lo;
 }
@@ -305,7 +323,7 @@ int TimestampIndex::upperBound(const std::string& t) const {
   int lo = 0, hi = (int)timestamps.size();
   while (lo < hi) {
     int mid = (lo+hi)/2;
-    if (timestamps[mid] <= t) lo = mid+1; else hi = mid;
+    if (timestamps[mid].compare(t) <= 0) lo = mid+1; else hi = mid;
   }
   return lo;
 }
